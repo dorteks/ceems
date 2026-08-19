@@ -1,0 +1,262 @@
+"use client";
+
+import { ArrowLeft, MapPin, Pencil, Printer, Route } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { PageHeader } from "@/app/_components/app-shell";
+import { StatusBadge } from "@/app/_components/status-badge";
+import { auditLog, customers } from "@/app/data/ceems";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+
+// export const Route = createFileRoute("/customers/$customerId")({
+//   loader: ({ params }) => {
+//     const customer = customers.find((c) => c.id === params.customerId);
+//     if (!customer) throw notFound();
+//     return customer;
+//   },
+//   head: ({ loaderData }) => {
+//     const name = loaderData ? `${loaderData.surname} ${loaderData.firstName}` : "Customer";
+//     return {
+//       meta: [
+//         { title: `${name} — Customer record | CEEMS` },
+//         {
+//           name: "description",
+//           content: `Full customer, meter, location, network and enumeration details for account ${loaderData?.accountNumber ?? ""}.`,
+//         },
+//         { property: "og:title", content: `${name} — Customer record | CEEMS` },
+//         { property: "og:description", content: "Customer, meter, network and enumeration detail view." },
+//       ],
+//     };
+//   },
+//   component: CustomerDetail,
+// });
+
+function Field({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <p className="truncate text-sm font-medium">{value || "—"}</p>
+    </div>
+  );
+}
+
+export default function CustomerDetail() {
+  const { customerId } = useParams<{ customerId: string }>();
+
+  const c = customers.find((customer) => String(customer.id) === customerId);
+
+  if (!c) {
+    return <div>Customer not found</div>;
+  }
+
+  return (
+    <>
+      <Button variant="ghost" size="sm" className="mb-3 -ml-2">
+        <Link href="/customers">
+          <ArrowLeft className="size-4" /> Back to customers
+        </Link>
+      </Button>
+
+      <PageHeader
+        title={`${c.surname} ${c.firstName} ${c.otherName}`}
+        description={`Account ${c.accountNumber} · ${c.customerType} · ${c.businessHub} hub`}
+        actions={
+          <>
+            <Button variant="outline" size="sm">
+              <Printer className="size-4" /> Print
+            </Button>
+            <Button size="sm">
+              <Pencil className="size-4" /> Edit record
+            </Button>
+          </>
+        }
+      />
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle>Record details</CardTitle>
+              <CardDescription>Captured {c.dateCreated}</CardDescription>
+            </div>
+            <StatusBadge value={c.status} />
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="customer">
+              <TabsList className="flex w-full flex-wrap justify-start">
+                <TabsTrigger value="customer">Customer</TabsTrigger>
+                <TabsTrigger value="meter">Meter</TabsTrigger>
+                <TabsTrigger value="location">Location</TabsTrigger>
+                <TabsTrigger value="network">Network</TabsTrigger>
+                <TabsTrigger value="history">History</TabsTrigger>
+              </TabsList>
+
+              <TabsContent
+                value="customer"
+                className="grid gap-4 pt-4 sm:grid-cols-2 lg:grid-cols-3"
+              >
+                <Field label="Surname" value={c.surname} />
+                <Field label="First name" value={c.firstName} />
+                <Field label="Other name" value={c.otherName} />
+                <Field label="NIN" value={c.nin} />
+                <Field label="Phone" value={c.phone} />
+                <Field label="Email" value={c.email} />
+                <Field label="Customer type" value={c.customerType} />
+                <Field label="Category" value={c.customerCategory} />
+                <Field label="Premise type" value={c.premiseType} />
+                <Field label="Nature of business" value={c.natureOfBusiness} />
+              </TabsContent>
+
+              <TabsContent
+                value="meter"
+                className="grid gap-4 pt-4 sm:grid-cols-2 lg:grid-cols-3"
+              >
+                <Field
+                  label="Meter number"
+                  value={c.meterNumber || "Unmetered"}
+                />
+                <Field label="Meter type" value={c.meterType} />
+                <Field label="Meter phase" value={c.meterPhase} />
+                <Field label="Tariff" value={c.tariff} />
+                <Field label="Feeder band" value={`Band ${c.feederBand}`} />
+                <Field
+                  label="Account relationship"
+                  value="Primary account holder"
+                />
+              </TabsContent>
+
+              <TabsContent value="location" className="pt-4">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <Field label="Address" value={c.address} />
+                  <Field label="City" value={c.city} />
+                  <Field label="LGA" value={c.lga} />
+                  <Field label="State" value={c.state} />
+                  <Field label="Longitude" value={c.longitude.toFixed(5)} />
+                  <Field label="Latitude" value={c.latitude.toFixed(5)} />
+                </div>
+                <div className="mt-4 flex h-48 items-center justify-center rounded-md border border-dashed border-border bg-muted/60 text-sm text-muted-foreground">
+                  <MapPin className="mr-2 size-4" /> Map preview —{" "}
+                  {c.latitude.toFixed(4)}, {c.longitude.toFixed(4)}
+                </div>
+              </TabsContent>
+
+              <TabsContent
+                value="network"
+                className="grid gap-4 pt-4 sm:grid-cols-2 lg:grid-cols-3"
+              >
+                <Field label="Region" value={c.region} />
+                <Field label="Business hub" value={c.businessHub} />
+                <Field label="Service center" value={c.serviceCenter} />
+                <Field label="Service code" value={c.serviceCode} />
+                <Field label="DSS" value={`${c.dssName} (${c.dssId})`} />
+                <Field
+                  label="Feeder"
+                  value={`${c.feederName} (${c.feederId})`}
+                />
+              </TabsContent>
+
+              <TabsContent value="history" className="pt-4">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Actor</TableHead>
+                        <TableHead>Action</TableHead>
+                        <TableHead className="hidden sm:table-cell">
+                          From
+                        </TableHead>
+                        <TableHead className="hidden sm:table-cell">
+                          To
+                        </TableHead>
+                        <TableHead className="text-right">When</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {auditLog.map((a, i) => (
+                        <TableRow key={i}>
+                          <TableCell className="font-medium">
+                            {a.actor}
+                          </TableCell>
+                          <TableCell>{a.action}</TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            {a.from}
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            {a.to}
+                          </TableCell>
+                          <TableCell className="text-right text-muted-foreground">
+                            {a.when}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Enumeration</CardTitle>
+              <CardDescription>Field capture details</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Field label="Enumerator" value={c.enumeratorName} />
+              <Field label="Enumerator ID" value={c.enumeratorId} />
+              <Field label="Phone" value={c.enumeratorPhone} />
+              <Separator />
+              <Field label="Remarks" value={c.remarks} />
+              <Field label="Date created" value={c.dateCreated} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Data quality</CardTitle>
+              <CardDescription>Automatic validation checks</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              {[
+                ["Account number format", "Pass"],
+                ["Meter number uniqueness", c.meterNumber ? "Pass" : "Missing"],
+                ["Phone format", "Pass"],
+                [
+                  "Coordinates within hub",
+                  c.status === "Flagged" ? "Failed" : "Pass",
+                ],
+                ["NIN present", "Pass"],
+              ].map(([label, result]) => (
+                <div key={label} className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{label}</span>
+                  <StatusBadge value={result!} />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </>
+  );
+}
