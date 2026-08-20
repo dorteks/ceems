@@ -126,7 +126,12 @@ export default function CustomersPage() {
               <Download className="size-4" /> Export
             </Button>
             <Button size="sm">
-              <Plus className="size-4" /> New customer
+              <Link
+                className="flex flex-row gap-2 items-center"
+                href={`/customers/add-new-customer`}
+              >
+                <Plus className="size-4" /> New customer
+              </Link>
             </Button>
           </>
         }
