@@ -1,0 +1,72 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum ServiceCenter {
+  AYEPE_1
+  AYEPE_2
+  AYETORO
+  GRA
+  KELEBE_1
+  KELEBE_2
+  OGO_OLUWA
+  OKE_FIA
+  OSOGBO_1
+  OSOGBO_2
+  OTA_EFUN
+}
+
+enum CustomerType {
+  PREPAID
+  POSTPAID
+}
+
+enum PremiseType {
+  RESIDENTIAL
+  COMMERCIAL
+  INDUSTRIAL
+  GOVERNMENT
+}
+
+enum MeterPhase {
+  Q1
+  Q3
+  WHOLE_CURRENT
+  LVMD
+  HVMD
+}
+
+enum CustomerCategory {
+  MD1
+  MD2
+  NMD
+}
+
+model Customer {
+  id               Int              @id @default(autoincrement())
+  accountNumber    String           @unique
+  surname          String
+  firstName        String
+  otherName        String?
+  nin              String?          @unique
+  email            String?          @unique
+  phone            String?
+  customerType     CustomerType?
+  customerCategory CustomerCategory?
+  premiseType      PremiseType?
+  meterPhase       MeterPhase?
+  serviceCenter    ServiceCenter?
+  address          String?
+  city             String?
+  state            String?
+  lga              String?
+  longitude        Float?
+  latitude         Float?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+}

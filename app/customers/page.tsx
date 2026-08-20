@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download, Filter, Plus, RotateCcw, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -54,33 +54,47 @@ export default function CustomersPage() {
   const [lga, setLga] = useState("All LGAs");
   const [feeder, setFeeder] = useState("All feeders");
   const [selected, setSelected] = useState<string[]>([]);
+  const [apiCustomers, setApiCustomers] = useState<typeof customers>([]);
+  const [loading, setLoading] = useState(true);
 
-  const rows = useMemo(
-    () =>
-      customers.filter((c) => {
-        const q = query.trim().toLowerCase();
-        const matchQ =
-          !q ||
-          [
-            c.accountNumber,
-            c.meterNumber,
-            c.surname,
-            c.firstName,
-            c.phone,
-            c.nin,
-          ]
-            .join(" ")
-            .toLowerCase()
-            .includes(q);
-        return (
-          matchQ &&
-          (status === "All statuses" || c.status === status) &&
-          (lga === "All LGAs" || c.lga === lga) &&
-          (feeder === "All feeders" || c.feederName === feeder)
-        );
-      }),
-    [query, status, lga, feeder],
-  );
+  // Fetch customers from API
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const response = await fetch("/api/customers?page=1&size=100");
+        const data = await response.json();
+        console.log("API Response:", data);
+        if (data.data) {
+          setApiCustomers(data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch customers:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCustomers();
+  }, []);
+
+  const rows = useMemo(() => {
+    const dataSource = apiCustomers.length > 0 ? apiCustomers : customers;
+    return dataSource.filter((c) => {
+      const q = query.trim().toLowerCase();
+      const matchQ =
+        !q ||
+        [c.accountNumber, c.meterNumber, c.surname, c.firstName, c.phone, c.nin]
+          .join(" ")
+          .toLowerCase()
+          .includes(q);
+      return (
+        matchQ &&
+        (status === "All statuses" || c.status === status) &&
+        (lga === "All LGAs" || c.lga === lga) &&
+        (feeder === "All feeders" || c.feederName === feeder)
+      );
+    });
+  }, [query, status, lga, feeder, apiCustomers]);
 
   const reset = () => {
     setQuery("");
@@ -98,7 +112,7 @@ export default function CustomersPage() {
     <>
       <PageHeader
         title="Customers"
-        description={`${rows.length} of ${customers.length} sample records shown · 214,806 in production dataset`}
+        description={`${rows.length} records shown${loading ? " (loading...)" : ""}`}
         actions={
           <>
             <Button variant="outline" size="sm">
