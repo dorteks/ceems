@@ -60,9 +60,9 @@ function Field({ label, value }: { label: string; value: string | number }) {
 }
 
 export default function CustomerDetail() {
-  const { customerId } = useParams<{ customerId: string }>();
+  const { id } = useParams<{ id: string }>();
 
-  const c = customers.find((customer) => String(customer.id) === customerId);
+  const c = customers.find((customer) => String(customer.id) === id);
 
   if (!c) {
     return <div>Customer not found</div>;

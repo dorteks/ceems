@@ -24,6 +24,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { systemUsers } from "../data/ceems";
 import { PageHeader } from "../_components/app-shell";
 import { StatusBadge } from "../_components/status-badge";
+import { InviteUserDialog } from "../_components/invite-user-dialog";
 
 // export const Route = createFileRoute("/administration")({
 //   head: () => ({
@@ -72,14 +73,10 @@ export default function AdminPage() {
       <PageHeader
         title="Administration"
         description="Users, roles and permission matrix"
-        actions={
-          <Button size="sm">
-            <Plus className="size-4" /> Invite user
-          </Button>
-        }
+        actions={<InviteUserDialog />}
       />
 
-      <Tabs defaultValue="users">
+      <Tabs defaultValue="users" className={"flex flex-col"}>
         <TabsList>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="permissions">Roles & permissions</TabsTrigger>

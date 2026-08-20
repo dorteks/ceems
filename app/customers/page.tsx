@@ -131,19 +131,19 @@ export default function CustomersPage() {
           <FilterSelect
             label="Status"
             value={status}
-            onChange={setStatus}
+            onChange={(next) => setStatus(next ?? "All statuses")}
             options={statusOptions}
           />
           <FilterSelect
             label="LGA"
             value={lga}
-            onChange={setLga}
+            onChange={(next) => setLga(next ?? "All LGAs")}
             options={lgaOptions}
           />
           <FilterSelect
             label="Feeder"
             value={feeder}
-            onChange={setFeeder}
+            onChange={(next) => setFeeder(next ?? "All feeders")}
             options={feederOptions}
           />
           <div className="flex items-end gap-2 md:col-span-2 xl:col-span-5">
@@ -279,7 +279,7 @@ function FilterSelect({
   return (
     <div>
       <Label className="mb-1.5 text-xs text-muted-foreground">{label}</Label>
-      <Select value={value} onValueChange={onChange}>
+      <Select value={value} onValueChange={(next) => onChange(next ?? value)}>
         <SelectTrigger className="w-full">
           <SelectValue />
         </SelectTrigger>
@@ -300,7 +300,10 @@ function FilterState({ label }: { label: string }) {
   return (
     <div className="ml-auto hidden w-48 sm:block">
       <Label className="sr-only">{label}</Label>
-      <Select value={value} onValueChange={setValue}>
+      <Select
+        value={value}
+        onValueChange={(next) => setValue(next ?? states[0]!)}
+      >
         <SelectTrigger className="w-full">
           <SelectValue />
         </SelectTrigger>
