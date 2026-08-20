@@ -39,6 +39,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth/auth";
+import { TimeDisplay } from "@/components/dashboard/time-display";
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -115,11 +116,18 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col bg-gray-900 lg:flex">
         <Brand />
         <NavList />
-        <div className="mt-auto border-t border-sidebar-border p-4 text-xs text-sidebar-foreground/70">
-          <p className="font-medium text-sidebar-accent-foreground">
-            Osun Distribution
-          </p>
-          <p>214,806 records synced</p>
+
+        <div className="mt-auto">
+          <TimeDisplay />
+
+          <div className="border-t border-sidebar-border p-4 text-xs text-sidebar-foreground/70">
+            <div>
+              <p className="font-medium text-sidebar-accent-foreground">
+                Osun Distribution
+              </p>
+              <p>214,806 records synced</p>
+            </div>
+          </div>
         </div>
       </aside>
 

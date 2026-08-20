@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import { AppShell } from "./_components/app-shell";
+import AuthGate from "./_components/auth-gate";
 import { RootProvider } from "@/lib/context/root-provider";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -28,7 +28,7 @@ export default function RootLayout({
         className={`${plusJakartaSans.className} bg-background text-foreground min-h-screen antialiased`}
       >
         <RootProvider>
-          <AppShell>{children}</AppShell>
+          <AuthGate>{children}</AuthGate>
         </RootProvider>
       </body>
     </html>

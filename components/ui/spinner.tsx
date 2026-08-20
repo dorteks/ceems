@@ -1,10 +1,9 @@
-import { cn } from "@/lib/utils"
-import { Loader2Icon } from "lucide-react"
+import type { ComponentProps } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
-function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
-  return (
-    <Loader2Icon data-slot="spinner" role="status" aria-label="Loading" className={cn("size-4 animate-spin", className)} {...props} />
-  )
-}
+const Spinner = ({ className, ...props }: ComponentProps<typeof Skeleton>) => (
+  <Skeleton className={cn('h-4 w-4 rounded-full', className)} {...props} />
+);
 
-export { Spinner }
+export default Spinner;
