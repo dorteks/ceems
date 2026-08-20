@@ -29,8 +29,9 @@ export function StatusBadge({
     <Badge
       variant="outline"
       className={cn(
-        "font-medium",
-        tone[value.toLowerCase()] ?? "bg-muted text-muted-foreground",
+        "font-medium rounded-sm",
+        tone[value.toLowerCase()] ??
+          "bg-muted text-muted-foreground rounded-sm",
         className,
       )}
     >

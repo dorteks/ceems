@@ -108,7 +108,10 @@ export default function NetworkPage() {
                     <AccordionItem key={hub.name} value={hub.name}>
                       <AccordionTrigger className="text-sm">
                         {hub.name} hub
-                        <Badge variant="secondary" className="ml-auto mr-2">
+                        <Badge
+                          className="ml-auto mr-2 bg-muted rounded-sm font-semibold px-2 py-1"
+                          variant="secondary"
+                        >
                           {hub.centers.length}{" "}
                           {hub.centers.length === 1 ? "center" : "centers"}
                         </Badge>

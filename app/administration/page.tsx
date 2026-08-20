@@ -117,13 +117,21 @@ export default function AdminPage() {
                           {u.email}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="secondary">{u.role}</Badge>
+                          <Badge
+                            className="bg-muted rounded-sm font-semibold px-2 py-1"
+                            variant="secondary"
+                          >
+                            {u.role}
+                          </Badge>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
                           {u.hub}
                         </TableCell>
                         <TableCell>
-                          <StatusBadge value={u.status} />
+                          <StatusBadge
+                            className="rounded-sm"
+                            value={u.status}
+                          />
                         </TableCell>
                       </TableRow>
                     ))}

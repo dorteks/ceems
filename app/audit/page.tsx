@@ -85,7 +85,12 @@ export default function AuditPage() {
                   <TableRow key={a.key}>
                     <TableCell className="font-medium">{a.actor}</TableCell>
                     <TableCell className="hidden sm:table-cell">
-                      <Badge variant="secondary">{a.role}</Badge>
+                      <Badge
+                        className="bg-muted rounded-sm font-semibold px-2 py-1"
+                        variant="secondary"
+                      >
+                        {a.role}
+                      </Badge>
                     </TableCell>
                     <TableCell>{a.action}</TableCell>
                     <TableCell className="text-numeric hidden md:table-cell">
