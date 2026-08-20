@@ -210,7 +210,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="p-4 md:p-6">{children}</main>
+        <main className="p-4 md:p-6 bg-muted/40">{children}</main>
       </div>
     </div>
   );

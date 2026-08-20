@@ -42,7 +42,7 @@ export default function LoginPage() {
   const demo = accounts[0];
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-10">
+    <div className="flex min-h-screen items-center justify-center bg-muted px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center gap-3">
           <span className="flex size-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
@@ -56,7 +56,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <Card>
+        <Card className="py-6 space-y-6">
           <CardHeader>
             <CardTitle>Sign in</CardTitle>
             <CardDescription>
@@ -65,7 +65,7 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <form
-              className="space-y-4"
+              className="space-y-6"
               onSubmit={(e) => {
                 e.preventDefault();
                 const res = signIn(email, password);

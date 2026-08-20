@@ -190,6 +190,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [accounts, persist, ready, user]);
 
+  // Apply role-scoped dashboard domain for theming.
+  useEffect(() => {
+    if (!ready) return;
+
+    const roleToDomain: Record<Role, string | null> = {
+      "Super Administrator": "administrator",
+      "Data Manager": "data_manager",
+      Supervisor: "supervisor",
+      Enumerator: "enumerator",
+      Viewer: "viewer",
+    };
+
+    const domain = user ? (roleToDomain[user.role] ?? null) : null;
+
+    if (domain) {
+      try {
+        document.documentElement.setAttribute("data-dashboard-domain", domain);
+        if (process.env.NODE_ENV !== "production")
+          console.log("applied data-dashboard-domain:", domain);
+      } catch {
+        /* noop in non-browser env */
+      }
+    } else {
+      try {
+        document.documentElement.removeAttribute("data-dashboard-domain");
+        if (process.env.NODE_ENV !== "production")
+          console.log("removed data-dashboard-domain");
+      } catch {
+        /* noop in non-browser env */
+      }
+    }
+  }, [ready, user]);
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
