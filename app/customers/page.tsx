@@ -64,8 +64,8 @@ export default function CustomersPage() {
         const response = await fetch("/api/customers?page=1&size=100");
         const data = await response.json();
         console.log("API Response:", data);
-        if (data.data) {
-          setApiCustomers(data.data);
+        if (data.items) {
+          setApiCustomers(data.items);
         }
       } catch (error) {
         console.error("Failed to fetch customers:", error);
@@ -83,7 +83,14 @@ export default function CustomersPage() {
       const q = query.trim().toLowerCase();
       const matchQ =
         !q ||
-        [c.accountNumber, c.meterNumber, c.surname, c.firstName, c.phone, c.nin]
+        [
+          c.account_number,
+          c.meter_number,
+          c.surname,
+          c.first_name,
+          c.phone,
+          c.nin,
+        ]
           .join(" ")
           .toLowerCase()
           .includes(q);
@@ -91,7 +98,7 @@ export default function CustomersPage() {
         matchQ &&
         (status === "All statuses" || c.status === status) &&
         (lga === "All LGAs" || c.lga === lga) &&
-        (feeder === "All feeders" || c.feederName === feeder)
+        (feeder === "All feeders" || c.feeder_name === feeder)
       );
     });
   }, [query, status, lga, feeder, apiCustomers]);
@@ -210,22 +217,22 @@ export default function CustomersPage() {
                       <Checkbox
                         checked={selected.includes(c.id)}
                         onCheckedChange={() => toggle(c.id)}
-                        aria-label={`Select ${c.accountNumber}`}
+                        aria-label={`Select ${c.account_number}`}
                       />
                     </TableCell>
                     <TableCell className="text-numeric font-medium">
-                      {c.accountNumber}
+                      {c.account_number}
                     </TableCell>
                     <TableCell>
                       <p className="font-medium">
-                        {c.surname} {c.firstName}
+                        {c.surname} {c.first_name}
                       </p>
                       <p className="text-numeric text-xs text-muted-foreground">
                         {c.phone}
                       </p>
                     </TableCell>
                     <TableCell className="text-numeric hidden md:table-cell">
-                      {c.meterNumber || (
+                      {c.meter_number || (
                         <span className="text-muted-foreground">Unmetered</span>
                       )}
                     </TableCell>
@@ -236,7 +243,7 @@ export default function CustomersPage() {
                       {c.lga}
                     </TableCell>
                     <TableCell className="hidden xl:table-cell">
-                      {c.feederName}
+                      {c.feeder_name}
                     </TableCell>
                     <TableCell>
                       <StatusBadge value={c.status} />

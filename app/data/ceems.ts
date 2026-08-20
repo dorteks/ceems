@@ -2,21 +2,21 @@ export type CustomerStatus = "Active" | "Pending" | "Inactive" | "Flagged";
 
 export interface CustomerRecord {
   id: string;
-  accountNumber: string;
+  account_number: string;
   nin: string;
   surname: string;
-  firstName: string;
-  otherName: string;
+  first_name: string;
+  other_name: string;
   email: string;
   phone: string;
-  customerType: "Residential" | "Commercial" | "Industrial" | "Special";
-  customerCategory: string;
-  premiseType: string;
-  natureOfBusiness: string;
+  customer_type: "Residential" | "Commercial" | "Industrial" | "Special";
+  customer_category: string;
+  premise_type: string;
+  nature_of_business: string;
   status: CustomerStatus;
-  meterNumber: string;
-  meterType: "Prepaid" | "Postpaid" | "Unmetered";
-  meterPhase: "Single" | "Three";
+  meter_number: string;
+  meter_type: "Prepaid" | "Postpaid" | "Unmetered";
+  meter_phase: "Single" | "Three";
   tariff: string;
   address: string;
   city: string;
@@ -25,19 +25,19 @@ export interface CustomerRecord {
   longitude: number;
   latitude: number;
   region: string;
-  businessHub: string;
-  serviceCenter: string;
-  serviceCode: string;
-  dssId: string;
-  dssName: string;
-  feederId: string;
-  feederName: string;
-  feederBand: "A" | "B" | "C" | "D" | "E";
-  enumeratorName: string;
-  enumeratorId: string;
-  enumeratorPhone: string;
+  business_hub: string;
+  service_center: string;
+  service_code: string;
+  dss_id: string;
+  dss_name: string;
+  feeder_id: string;
+  feeder_name: string;
+  feeder_band: "A" | "B" | "C" | "D" | "E";
+  enumerator_name: string;
+  enumerator_id: string;
+  enumerator_phone: string;
   remarks: string;
-  dateCreated: string;
+  date_created: string;
 }
 
 const first = [
@@ -109,7 +109,7 @@ const statuses: CustomerStatus[] = [
   "Inactive",
   "Flagged",
 ];
-const types: CustomerRecord["customerType"][] = [
+const types: CustomerRecord["customer_type"][] = [
   "Residential",
   "Residential",
   "Commercial",
@@ -134,27 +134,27 @@ export const customers: CustomerRecord[] = Array.from(
     const status = pick(statuses, i * 3 + 1);
     return {
       id: `cus-${i + 1}`,
-      accountNumber: `AC${(4520011 + i * 137).toString()}`,
+      account_number: `AC${(4520011 + i * 137).toString()}`,
       nin: `${(11122233344 + i * 977).toString()}`,
       surname: pick(sur, i).toUpperCase(),
-      firstName: pick(first, i * 3),
-      otherName: pick(other, i * 5),
+      first_name: pick(first, i * 3),
+      other_name: pick(other, i * 5),
       email: `${pick(first, i * 3).toLowerCase()}.${pick(sur, i).toLowerCase()}@mail.com`,
       phone: `080${(31000000 + i * 45311).toString().slice(0, 8)}`,
-      customerType: pick(types, i * 2),
-      customerCategory: i % 3 === 0 ? "MD" : "Non-MD",
-      premiseType: pick(premises, i),
-      natureOfBusiness: i % 4 === 0 ? "Retail trade" : "Residential dwelling",
+      customer_type: pick(types, i * 2),
+      customer_category: i % 3 === 0 ? "MD" : "Non-MD",
+      premise_type: pick(premises, i),
+      nature_of_business: i % 4 === 0 ? "Retail trade" : "Residential dwelling",
       status,
-      meterNumber:
+      meter_number:
         status === "Pending" ? "" : `4519${(220011 + i * 733).toString()}`,
-      meterType:
+      meter_type:
         status === "Pending"
           ? "Unmetered"
           : i % 3 === 0
             ? "Postpaid"
             : "Prepaid",
-      meterPhase: i % 5 === 0 ? "Three" : "Single",
+      meter_phase: i % 5 === 0 ? "Three" : "Single",
       tariff: pick(tariffs, i),
       address: `${(i % 40) + 1} ${pick(centers, i)} Road, ${pick(lgas, i)}`,
       city: "Osogbo",
@@ -163,22 +163,22 @@ export const customers: CustomerRecord[] = Array.from(
       longitude: 4.5 + (i % 20) * 0.011,
       latitude: 7.75 + (i % 17) * 0.009,
       region: "South West",
-      businessHub: pick(hubs, i),
-      serviceCenter: pick(centers, i),
-      serviceCode: `SC-${100 + (i % 6)}`,
-      dssId: `DSS-${400 + (i % 4)}`,
-      dssName: pick(dss, i),
-      feederId: `FDR-${20 + (i % 4)}`,
-      feederName: pick(feeders, i),
-      feederBand: (["A", "B", "C", "D", "E"] as const)[i % 5]!,
-      enumeratorName: en.name,
-      enumeratorId: en.id,
-      enumeratorPhone: en.phone,
+      business_hub: pick(hubs, i),
+      service_center: pick(centers, i),
+      service_code: `SC-${100 + (i % 6)}`,
+      dss_id: `DSS-${400 + (i % 4)}`,
+      dss_name: pick(dss, i),
+      feeder_id: `FDR-${20 + (i % 4)}`,
+      feeder_name: pick(feeders, i),
+      feeder_band: (["A", "B", "C", "D", "E"] as const)[i % 5]!,
+      enumerator_name: en.name,
+      enumerator_id: en.id,
+      enumerator_phone: en.phone,
       remarks:
         status === "Flagged"
           ? "Coordinates outside service area"
           : "Captured on field visit",
-      dateCreated: `2026-0${(i % 8) + 1}-${((i % 27) + 1).toString().padStart(2, "0")}`,
+      date_created: `2026-0${(i % 8) + 1}-${((i % 27) + 1).toString().padStart(2, "0")}`,
     };
   },
 );
