@@ -13,7 +13,7 @@ export async function listCustomers(opts?: { page?: number; size?: number }) {
     prisma.customer.findMany({
       skip,
       take: size,
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
     }),
     prisma.customer.count(),
   ]);

@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     // Basic validation
-    if (!body.accountNumber || !body.surname || !body.firstName) {
+    if (!body.account_number || !body.surname || !body.first_name) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 },

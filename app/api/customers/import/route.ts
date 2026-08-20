@@ -7,6 +7,7 @@ export async function POST(req: Request) {
   try {
     const form = await req.formData();
     const file = form.get("file") as File | null;
+    const commit = String(form.get("commit") || "false") === "true";
 
     if (!file) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
@@ -14,10 +15,10 @@ export async function POST(req: Request) {
 
     const buffer = await file.arrayBuffer();
 
-    const result = await parseAndImportXlsx(buffer);
+    const result = await parseAndImportXlsx(buffer, { commit });
 
     return NextResponse.json(
-      { message: "Import completed", ...result },
+      { message: commit ? "Import completed" : "Preview generated", ...result },
       { status: 201 },
     );
   } catch (err: any) {

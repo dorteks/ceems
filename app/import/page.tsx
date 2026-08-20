@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useRef, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -53,15 +54,182 @@ const steps = [
 ];
 
 export default function ImportPage() {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [result, setResult] = useState<any | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const onFile = async (file: File) => {
+    setMessage(null);
+    setResult(null);
+    setSelectedFile(file);
+
+    if (!file) return;
+
+    const name = file.name.toLowerCase();
+    if (
+      !name.endsWith(".xlsx") &&
+      !name.endsWith(".xls") &&
+      !name.endsWith(".csv")
+    ) {
+      setMessage("Please upload an .xlsx, .xls or .csv file");
+      return;
+    }
+
+    try {
+      setUploading(true);
+
+      const fd = new FormData();
+      fd.append("file", file);
+
+      const res = await fetch("/api/customers/import", {
+        method: "POST",
+        body: fd,
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        setMessage(json?.error || "Import failed");
+      } else {
+        setResult(json);
+        setMessage(json.message || "Preview ready");
+      }
+    } catch (err: any) {
+      setMessage(err?.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const f = e.dataTransfer.files?.[0];
+    if (f) onFile(f);
+  };
+
+  const onSelectClick = () => inputRef.current?.click();
+
+  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) onFile(f);
+  };
+
+  const commitImport = async () => {
+    if (!selectedFile) return setMessage("No file selected to commit");
+
+    setUploading(true);
+    setMessage(null);
+
+    try {
+      const fd = new FormData();
+      fd.append("file", selectedFile);
+      fd.append("commit", "true");
+
+      const res = await fetch("/api/customers/import", {
+        method: "POST",
+        body: fd,
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setMessage(json?.error || "Commit failed");
+      } else {
+        setResult(json);
+        setMessage("Import committed");
+      }
+    } catch (err: any) {
+      setMessage(err?.message || "Commit failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const downloadErrors = () => {
+    if (!result?.errors?.length && !result?.duplicates?.length) return;
+    const rows: string[] = [];
+    rows.push(["row", "type", "messages"].join(","));
+
+    for (const e of result.errors || []) {
+      rows.push(
+        [e.row, "validation", `"${(e.errors || []).join("; ")}"`].join(","),
+      );
+    }
+    for (const d of result.duplicates || []) {
+      rows.push(["", "duplicate", "duplicate record"].join(","));
+    }
+
+    const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "import-errors.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadTemplate = () => {
+    const headers = [
+      "Account_number",
+      "Meter_number",
+      "Customer_type",
+      "Meter_type",
+      "Meter Phase",
+      "Customer Category (MD1,MD2,NMD)",
+      "NIN",
+      "Surname",
+      "Firstname",
+      "Othername",
+      "Address",
+      "City",
+      "State",
+      "LGA",
+      "Service_Center",
+      "Service_Code",
+      "email",
+      "Tariff",
+      "Phone_Number",
+      "Premise_Type",
+      "Nature Of Business",
+      "Date_Created",
+      "Longitude",
+      "Latitude",
+      "DSS_ID",
+      "DSS_Name",
+      "Feeder_ID",
+      "Feeder_Name",
+      "Feeder_Band",
+      "Status",
+      "Business_hub",
+      "Region",
+      "Enumerator's Name",
+      "Enumerator's ID",
+      "Enumerator's Phone NO.",
+      "Remark",
+    ];
+    const blob = new Blob([headers.join(",") + "\n"], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "customers-template.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <>
       <PageHeader
         title="Import & export"
         description="Bring Excel and CSV datasets into CEEMS with validation and duplicate detection"
         actions={
-          <Button variant="outline" size="sm">
-            <Download className="size-4" /> Download template
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={downloadTemplate}>
+              <Download className="size-4" /> Download template
+            </Button>
+            <Button variant="ghost" size="sm" onClick={downloadErrors}>
+              Download errors
+            </Button>
+          </div>
         }
       />
 
@@ -74,7 +242,11 @@ export default function ImportPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/40 px-6 py-12 text-center">
+            <div
+              onDrop={onDrop}
+              onDragOver={(e) => e.preventDefault()}
+              className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/40 px-6 py-12 text-center"
+            >
               <UploadCloud className="mb-3 size-8 text-primary" />
               <p className="text-sm font-medium">
                 Drag and drop your spreadsheet
@@ -82,9 +254,95 @@ export default function ImportPage() {
               <p className="mt-1 text-xs text-muted-foreground">
                 or browse from your device
               </p>
-              <Button className="mt-4" size="sm">
-                <FileSpreadsheet className="size-4" /> Select file
+
+              <input
+                ref={inputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                className="hidden"
+                onChange={onInputChange}
+              />
+
+              <Button
+                className="mt-4"
+                size="sm"
+                onClick={onSelectClick}
+                disabled={uploading}
+              >
+                <FileSpreadsheet className="size-4" />{" "}
+                {uploading ? "Uploading..." : "Select file"}
               </Button>
+
+              {message && (
+                <p className="mt-3 text-sm text-muted-foreground">{message}</p>
+              )}
+
+              {result && (
+                <div className="mt-3 text-sm text-left w-full max-w-4xl">
+                  <p className="font-medium">Result</p>
+                  <div className="text-sm text-muted-foreground">
+                    <div>Total rows: {result.total_rows}</div>
+                    {result.valid_count !== undefined && (
+                      <div>Valid: {result.valid_count}</div>
+                    )}
+                    {result.invalid_count !== undefined && (
+                      <div>Invalid: {result.invalid_count}</div>
+                    )}
+                    {result.duplicates_count !== undefined && (
+                      <div>Duplicates: {result.duplicates_count}</div>
+                    )}
+                    {result.imported !== undefined && (
+                      <div>Imported: {result.imported}</div>
+                    )}
+                  </div>
+
+                  {result.preview && (
+                    <div className="mt-4">
+                      <div className="mb-2 flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={commitImport}
+                          disabled={uploading}
+                        >
+                          Commit import
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={downloadErrors}
+                        >
+                          Download errors
+                        </Button>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Account</TableHead>
+                              <TableHead>Surname</TableHead>
+                              <TableHead>Firstname</TableHead>
+                              <TableHead>Phone</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {result.preview.map((r: any, idx: number) => (
+                              <TableRow key={idx}>
+                                <TableCell className="font-medium">
+                                  {r.account_number}
+                                </TableCell>
+                                <TableCell>{r.surname}</TableCell>
+                                <TableCell>{r.first_name}</TableCell>
+                                <TableCell>{r.phone}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <Separator className="my-6" />
