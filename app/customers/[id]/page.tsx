@@ -1,6 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { ArrowLeft, MapPin, Pencil, Printer } from "lucide-react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+
+import { PageHeader } from "@/app/_components/app-shell";
+import { StatusBadge } from "@/app/_components/status-badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,8 +15,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -19,66 +25,157 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PageHeader } from "@/app/_components/app-shell";
-import { StatusBadge } from "@/app/_components/status-badge";
-import { auditLog, customers } from "@/app/data/ceems";
-import Link from "next/link";
-import { useParams } from "next/navigation";
 
-// export const Route = createFileRoute("/customers/$customerId")({
-//   loader: ({ params }) => {
-//     const customer = customers.find((c) => c.id === params.customerId);
-//     if (!customer) throw notFound();
-//     return customer;
-//   },
-//   head: ({ loaderData }) => {
-//     const name = loaderData ? `${loaderData.surname} ${loaderData.firstName}` : "Customer";
-//     return {
-//       meta: [
-//         { title: `${name} — Customer record | CEEMS` },
-//         {
-//           name: "description",
-//           content: `Full customer, meter, location, network and enumeration details for account ${loaderData?.accountNumber ?? ""}.`,
-//         },
-//         { property: "og:title", content: `${name} — Customer record | CEEMS` },
-//         { property: "og:description", content: "Customer, meter, network and enumeration detail view." },
-//       ],
-//     };
-//   },
-//   component: CustomerDetail,
-// });
+import { auditLog } from "@/app/data/ceems";
 
-function Field({ label, value }: { label: string; value: string | number }) {
+type CustomerDetailRecord = {
+  id: number;
+  account_number: string;
+  meter_number: string | null;
+  surname: string;
+  first_name: string;
+  other_name: string | null;
+  nin: string | null;
+  customer_type: string | null;
+  customer_category: string | null;
+  premise_type: string | null;
+  meter_type: string | null;
+  meter_phase: string | null;
+  nature_of_business: string | null;
+  status: string | null;
+  phone: string | null;
+  email: string | null;
+  tariff: string | null;
+  feeder_band: string | null;
+  address: string | null;
+  city: string | null;
+  lga: string | null;
+  state: string | null;
+  longitude: number | null;
+  latitude: number | null;
+  region: string | null;
+  business_hub: string | null;
+  service_center: string | null;
+  service_code: string | null;
+  dss_id: string | null;
+  dss_name: string | null;
+  feeder_id: string | null;
+  feeder_name: string | null;
+  enumerator_name: string | null;
+  enumerator_id: string | null;
+  enumerator_phone_number: string | null;
+  remark: string | null;
+  created_at: string;
+};
+
+function Field({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number | null | undefined;
+}) {
   return (
     <div className="min-w-0">
       <p className="text-xs uppercase tracking-wide text-muted-foreground">
         {label}
       </p>
-      <p className="truncate text-sm font-medium">{value || "—"}</p>
+      <p className="truncate text-sm font-medium">{value ?? "—"}</p>
     </div>
   );
 }
 
+function joinPair(left: string | null, right: string | null) {
+  if (!left && !right) {
+    return null;
+  }
+
+  if (left && right) {
+    return `${left} (${right})`;
+  }
+
+  return left ?? right;
+}
+
 export default function CustomerDetail() {
   const { id } = useParams<{ id: string }>();
+  const [customer, setCustomer] = useState<CustomerDetailRecord | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const c = customers.find((customer) => String(customer.id) === id);
+  useEffect(() => {
+    let cancelled = false;
 
-  if (!c) {
+    const fetchCustomer = async () => {
+      try {
+        const response = await fetch(`/api/customers/${id}`);
+        const data = (await response.json().catch(() => ({}))) as
+          | CustomerDetailRecord
+          | { error?: string };
+
+        if (!response.ok) {
+          throw new Error(
+            "error" in data && data.error
+              ? data.error
+              : "Failed to fetch customer",
+          );
+        }
+
+        if (!cancelled) {
+          setCustomer(data as CustomerDetailRecord);
+        }
+      } catch (fetchError) {
+        if (!cancelled) {
+          setError(
+            fetchError instanceof Error
+              ? fetchError.message
+              : "Failed to fetch customer",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchCustomer();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  if (loading) {
+    return <div>Loading customer...</div>;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
+
+  if (!customer) {
     return <div>Customer not found</div>;
   }
 
+  const c = customer;
+  const title = `${c.surname} ${c.first_name} ${c.other_name ?? ""}`.trim();
+  const mapLabel =
+    c.latitude != null && c.longitude != null
+      ? `${c.latitude.toFixed(4)}, ${c.longitude.toFixed(4)}`
+      : "Coordinates unavailable";
+
   return (
     <>
-      <Button variant="ghost" size="sm" className="mb-3 -ml-2">
+      <Button variant="ghost" size="sm" className="mb-3 -ml-2" asChild>
         <Link href="/customers">
           <ArrowLeft className="size-4" /> Back to customers
         </Link>
       </Button>
 
       <PageHeader
-        title={`${c.surname} ${c.first_name} ${c.other_name}`}
-        description={`Account ${c.account_number} · ${c.customer_type} · ${c.business_hub} hub`}
+        title={title}
+        description={`Account ${c.account_number} · ${c.customer_type ?? "Unclassified"} · ${c.business_hub ?? "Unknown"} hub`}
         actions={
           <>
             <Button variant="outline" size="sm">
@@ -98,9 +195,11 @@ export default function CustomerDetail() {
           <CardHeader className="flex-row items-center justify-between space-y-0">
             <div>
               <CardTitle>Record details</CardTitle>
-              <CardDescription>Captured {c.date_created}</CardDescription>
+              <CardDescription>
+                Captured {new Date(c.created_at).toLocaleDateString()}
+              </CardDescription>
             </div>
-            <StatusBadge value={c.status} />
+            <StatusBadge value={c.status ?? "Pending"} />
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="customer">
@@ -142,7 +241,10 @@ export default function CustomerDetail() {
                 <Field label="Meter type" value={c.meter_type} />
                 <Field label="Meter phase" value={c.meter_phase} />
                 <Field label="Tariff" value={c.tariff} />
-                <Field label="Feeder band" value={`Band ${c.feeder_band}`} />
+                <Field
+                  label="Feeder band"
+                  value={c.feeder_band ? `Band ${c.feeder_band}` : null}
+                />
                 <Field
                   label="Account relationship"
                   value="Primary account holder"
@@ -155,12 +257,17 @@ export default function CustomerDetail() {
                   <Field label="City" value={c.city} />
                   <Field label="LGA" value={c.lga} />
                   <Field label="State" value={c.state} />
-                  <Field label="Longitude" value={c.longitude.toFixed(5)} />
-                  <Field label="Latitude" value={c.latitude.toFixed(5)} />
+                  <Field
+                    label="Longitude"
+                    value={c.longitude?.toFixed(5) ?? null}
+                  />
+                  <Field
+                    label="Latitude"
+                    value={c.latitude?.toFixed(5) ?? null}
+                  />
                 </div>
                 <div className="mt-4 flex h-48 items-center justify-center rounded-md border border-dashed border-border bg-muted/60 text-sm text-muted-foreground">
-                  <MapPin className="mr-2 size-4" /> Map preview —{" "}
-                  {c.latitude.toFixed(4)}, {c.longitude.toFixed(4)}
+                  <MapPin className="mr-2 size-4" /> Map preview - {mapLabel}
                 </div>
               </TabsContent>
 
@@ -172,10 +279,10 @@ export default function CustomerDetail() {
                 <Field label="Business hub" value={c.business_hub} />
                 <Field label="Service center" value={c.service_center} />
                 <Field label="Service code" value={c.service_code} />
-                <Field label="DSS" value={`${c.dss_name} (${c.dss_id})`} />
+                <Field label="DSS" value={joinPair(c.dss_name, c.dss_id)} />
                 <Field
                   label="Feeder"
-                  value={`${c.feeder_name} (${c.feeder_id})`}
+                  value={joinPair(c.feeder_name, c.feeder_id)}
                 />
               </TabsContent>
 
@@ -230,10 +337,13 @@ export default function CustomerDetail() {
             <CardContent className="space-y-3">
               <Field label="Enumerator" value={c.enumerator_name} />
               <Field label="Enumerator ID" value={c.enumerator_id} />
-              <Field label="Phone" value={c.enumerator_phone} />
+              <Field label="Phone" value={c.enumerator_phone_number} />
               <Separator />
-              <Field label="Remarks" value={c.remarks} />
-              <Field label="Date created" value={c.date_created} />
+              <Field label="Remarks" value={c.remark} />
+              <Field
+                label="Date created"
+                value={new Date(c.created_at).toLocaleDateString()}
+              />
             </CardContent>
           </Card>
 
@@ -252,7 +362,7 @@ export default function CustomerDetail() {
                 ["Phone format", "Pass"],
                 [
                   "Coordinates within hub",
-                  c.status === "Flagged" ? "Failed" : "Pass",
+                  c.status === "DISCONNECTED" ? "Failed" : "Pass",
                 ],
                 ["NIN present", "Pass"],
               ].map(([label, result]) => (

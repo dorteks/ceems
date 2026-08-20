@@ -5,6 +5,7 @@ import {
   meterPhaseOptions,
   meterTypeOptions,
   premiseTypeOptions,
+  statusOptions,
   serviceCenterOptions,
 } from "../_lib/customer-enums";
 
@@ -18,6 +19,7 @@ export default function AddNewCustomerPage() {
       customerCategoryOptions={customerCategoryOptions}
       premiseTypeOptions={premiseTypeOptions}
       serviceCenterOptions={serviceCenterOptions}
+      statusOptions={statusOptions}
     />
   );
 }

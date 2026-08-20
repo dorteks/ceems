@@ -8,6 +8,7 @@ import {
   meterTypeOptions,
   premiseTypeOptions,
   serviceCenterOptions,
+  statusOptions,
 } from "../../_lib/customer-enums";
 import {
   customerToFormValues,
@@ -46,6 +47,7 @@ export default async function EditCustomerPage({
       customerCategoryOptions={customerCategoryOptions}
       premiseTypeOptions={premiseTypeOptions}
       serviceCenterOptions={serviceCenterOptions}
+      statusOptions={statusOptions}
     />
   );
 }

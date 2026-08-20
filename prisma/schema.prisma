@@ -52,6 +52,13 @@ enum CustomerCategory {
   NMD
 }
 
+enum Status {
+ACTIVE
+INACTIVE
+PENDING
+DISCONNECTED
+}
+
 model Customer {
   id                        Int              @id @default(autoincrement())
   
@@ -96,7 +103,7 @@ model Customer {
   feeder_id                 String?
   feeder_name               String?
   feeder_band               String?
-  status                    String?
+  status                    Status?
   business_hub              String?
   region                    String?
 

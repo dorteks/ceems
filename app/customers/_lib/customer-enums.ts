@@ -5,6 +5,7 @@ import {
   MeterType,
   PremiseType,
   ServiceCenter,
+  Status,
 } from "@prisma/client";
 
 import type { SelectOption } from "./customer-form";
@@ -30,3 +31,4 @@ export const meterPhaseOptions = optionsFromEnum(MeterPhase);
 export const customerCategoryOptions = optionsFromEnum(CustomerCategory);
 export const premiseTypeOptions = optionsFromEnum(PremiseType);
 export const serviceCenterOptions = optionsFromEnum(ServiceCenter);
+export const statusOptions = optionsFromEnum(Status);

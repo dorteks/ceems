@@ -44,9 +44,9 @@ import { TimeDisplay } from "@/components/dashboard/time-display";
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/customers", label: "Customers", icon: Users },
+  { to: "/import", label: "Import & Export", icon: Upload },
   { to: "/enumeration", label: "Enumeration", icon: ClipboardList },
   { to: "/network", label: "Network", icon: Network },
-  { to: "/import", label: "Import & Export", icon: Upload },
   { to: "/map", label: "Map", icon: Map },
   { to: "/audit", label: "Audit trail", icon: History },
   { to: "/administration", label: "Administration", icon: Shield },

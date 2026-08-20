@@ -550,15 +550,6 @@ export function CustomerForm({
                   className="rounded-sm text-sm"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Input
-                  id="status"
-                  value={form.status}
-                  onChange={(e) => update("status", e.target.value)}
-                  className="rounded-sm text-sm"
-                />
-              </div>
               <SelectField
                 label="Status"
                 value={form.status}
