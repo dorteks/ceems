@@ -26,6 +26,11 @@ enum CustomerType {
   POSTPAID
 }
 
+enum MeterType {
+  PREPAID
+  POSTPAID
+}
+
 enum PremiseType {
   RESIDENTIAL
   COMMERCIAL
@@ -48,25 +53,73 @@ enum CustomerCategory {
 }
 
 model Customer {
-  id               Int              @id @default(autoincrement())
-  accountNumber    String           @unique
-  surname          String
-  firstName        String
-  otherName        String?
-  nin              String?          @unique
-  email            String?          @unique
-  phone            String?
-  customerType     CustomerType?
-  customerCategory CustomerCategory?
-  premiseType      PremiseType?
-  meterPhase       MeterPhase?
-  serviceCenter    ServiceCenter?
-  address          String?
-  city             String?
-  state            String?
-  lga              String?
-  longitude        Float?
-  latitude         Float?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  id                        Int              @id @default(autoincrement())
+  
+  // Account and meter
+  account_number            String           @unique
+  meter_number              String?          @unique
+
+  // Personal information
+  surname                   String
+  first_name                String
+  other_name                String?
+  nin                       String?          @unique
+
+  // Customer classification
+  customer_type             CustomerType?
+  customer_category         CustomerCategory?
+  premise_type              PremiseType?
+  meter_type                MeterType?
+  meter_phase               MeterPhase?
+
+  // Location / service
+  address                   String?
+  city                      String?
+  state                     String?
+  lga                       String?
+  service_center            ServiceCenter?
+  service_code              String?
+  tariff                    String?
+  longitude                 Float?
+  latitude                  Float?
+
+  // Contact
+  email                     String?          @unique
+  phone                     String?
+
+  // Business
+  nature_of_business        String?
+
+  // Feeder / grid
+  dss_id                    String?
+  dss_name                  String?
+  feeder_id                 String?
+  feeder_name               String?
+  feeder_band               String?
+  status                    String?
+  business_hub              String?
+  region                    String?
+
+  // Enumerator
+  enumerator_name           String?
+  enumerator_id             String?
+  enumerator_phone_number   String?
+  remark                    String?
+
+  // Audit
+  created_at                DateTime         @default(now())
+  updated_at                DateTime         @updatedAt
+  created_by                String?
+  updated_by                String?
+
+  @@index([meter_number])
+  @@index([customer_type])
+  @@index([customer_category])
+  @@index([service_center])
+  @@index([state])
+  @@index([lga])
+  @@index([dss_id])
+  @@index([feeder_id])
+  @@index([enumerator_id])
+  @@index([status])
 }

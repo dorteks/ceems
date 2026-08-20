@@ -20,3 +20,23 @@ export async function listCustomers(opts?: { page?: number; size?: number }) {
 
   return { items, total, page, size };
 }
+
+export async function importCustomers(
+  customers: Array<Record<string, unknown>>,
+  batchSize = 500,
+) {
+  let imported = 0;
+
+  for (let i = 0; i < customers.length; i += batchSize) {
+    const batch = customers.slice(i, i + batchSize) as any[];
+
+    const result = await prisma.customer.createMany({
+      data: batch,
+      skipDuplicates: true,
+    });
+
+    imported += result.count;
+  }
+
+  return { total: customers.length, imported };
+}
