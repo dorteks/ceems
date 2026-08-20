@@ -12,9 +12,8 @@ export async function GET(req: Request) {
 
     const result = await listCustomers({ page, size });
     return NextResponse.json(result, { status: 200 });
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error(err);
+  } catch (error: unknown) {
+    console.error(error);
     return NextResponse.json(
       { error: "Failed to fetch customers" },
       { status: 500 },
@@ -24,7 +23,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = (await req.json()) as Record<string, unknown>;
 
     // Basic validation
     if (!body.account_number || !body.surname || !body.first_name) {
@@ -87,13 +86,13 @@ export async function POST(req: Request) {
       updated_at: body.updated_at ?? null,
       created_by: body.created_by ?? null,
       updated_by: body.updated_by ?? null,
-    } as any);
+    });
 
     return NextResponse.json(created, { status: 201 });
-  } catch (err: any) {
-    // eslint-disable-next-line no-console
-    console.error(err);
-    const message = err?.message || "Failed to create customer";
+  } catch (error: unknown) {
+    console.error(error);
+    const message =
+      error instanceof Error ? error.message : "Failed to create customer";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

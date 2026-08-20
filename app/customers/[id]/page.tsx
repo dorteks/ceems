@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, MapPin, Pencil, Printer, Route } from "lucide-react";
+import { ArrowLeft, MapPin, Pencil, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -77,15 +77,17 @@ export default function CustomerDetail() {
       </Button>
 
       <PageHeader
-        title={`${c.surname} ${c.firstName} ${c.otherName}`}
-        description={`Account ${c.accountNumber} · ${c.customerType} · ${c.businessHub} hub`}
+        title={`${c.surname} ${c.first_name} ${c.other_name}`}
+        description={`Account ${c.account_number} · ${c.customer_type} · ${c.business_hub} hub`}
         actions={
           <>
             <Button variant="outline" size="sm">
               <Printer className="size-4" /> Print
             </Button>
-            <Button size="sm">
-              <Pencil className="size-4" /> Edit record
+            <Button size="sm" asChild>
+              <Link href={`/customers/${id}/edit`}>
+                <Pencil className="size-4" /> Edit record
+              </Link>
             </Button>
           </>
         }
@@ -96,7 +98,7 @@ export default function CustomerDetail() {
           <CardHeader className="flex-row items-center justify-between space-y-0">
             <div>
               <CardTitle>Record details</CardTitle>
-              <CardDescription>Captured {c.dateCreated}</CardDescription>
+              <CardDescription>Captured {c.date_created}</CardDescription>
             </div>
             <StatusBadge value={c.status} />
           </CardHeader>
@@ -115,15 +117,18 @@ export default function CustomerDetail() {
                 className="grid gap-4 pt-4 sm:grid-cols-2 lg:grid-cols-3"
               >
                 <Field label="Surname" value={c.surname} />
-                <Field label="First name" value={c.firstName} />
-                <Field label="Other name" value={c.otherName} />
+                <Field label="First name" value={c.first_name} />
+                <Field label="Other name" value={c.other_name} />
                 <Field label="NIN" value={c.nin} />
                 <Field label="Phone" value={c.phone} />
                 <Field label="Email" value={c.email} />
-                <Field label="Customer type" value={c.customerType} />
-                <Field label="Category" value={c.customerCategory} />
-                <Field label="Premise type" value={c.premiseType} />
-                <Field label="Nature of business" value={c.natureOfBusiness} />
+                <Field label="Customer type" value={c.customer_type} />
+                <Field label="Category" value={c.customer_category} />
+                <Field label="Premise type" value={c.premise_type} />
+                <Field
+                  label="Nature of business"
+                  value={c.nature_of_business}
+                />
               </TabsContent>
 
               <TabsContent
@@ -132,12 +137,12 @@ export default function CustomerDetail() {
               >
                 <Field
                   label="Meter number"
-                  value={c.meterNumber || "Unmetered"}
+                  value={c.meter_number || "Unmetered"}
                 />
-                <Field label="Meter type" value={c.meterType} />
-                <Field label="Meter phase" value={c.meterPhase} />
+                <Field label="Meter type" value={c.meter_type} />
+                <Field label="Meter phase" value={c.meter_phase} />
                 <Field label="Tariff" value={c.tariff} />
-                <Field label="Feeder band" value={`Band ${c.feederBand}`} />
+                <Field label="Feeder band" value={`Band ${c.feeder_band}`} />
                 <Field
                   label="Account relationship"
                   value="Primary account holder"
@@ -164,13 +169,13 @@ export default function CustomerDetail() {
                 className="grid gap-4 pt-4 sm:grid-cols-2 lg:grid-cols-3"
               >
                 <Field label="Region" value={c.region} />
-                <Field label="Business hub" value={c.businessHub} />
-                <Field label="Service center" value={c.serviceCenter} />
-                <Field label="Service code" value={c.serviceCode} />
-                <Field label="DSS" value={`${c.dssName} (${c.dssId})`} />
+                <Field label="Business hub" value={c.business_hub} />
+                <Field label="Service center" value={c.service_center} />
+                <Field label="Service code" value={c.service_code} />
+                <Field label="DSS" value={`${c.dss_name} (${c.dss_id})`} />
                 <Field
                   label="Feeder"
-                  value={`${c.feederName} (${c.feederId})`}
+                  value={`${c.feeder_name} (${c.feeder_id})`}
                 />
               </TabsContent>
 
@@ -223,12 +228,12 @@ export default function CustomerDetail() {
               <CardDescription>Field capture details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Field label="Enumerator" value={c.enumeratorName} />
-              <Field label="Enumerator ID" value={c.enumeratorId} />
-              <Field label="Phone" value={c.enumeratorPhone} />
+              <Field label="Enumerator" value={c.enumerator_name} />
+              <Field label="Enumerator ID" value={c.enumerator_id} />
+              <Field label="Phone" value={c.enumerator_phone} />
               <Separator />
               <Field label="Remarks" value={c.remarks} />
-              <Field label="Date created" value={c.dateCreated} />
+              <Field label="Date created" value={c.date_created} />
             </CardContent>
           </Card>
 
@@ -240,7 +245,10 @@ export default function CustomerDetail() {
             <CardContent className="space-y-2 text-sm">
               {[
                 ["Account number format", "Pass"],
-                ["Meter number uniqueness", c.meterNumber ? "Pass" : "Missing"],
+                [
+                  "Meter number uniqueness",
+                  c.meter_number ? "Pass" : "Missing",
+                ],
                 ["Phone format", "Pass"],
                 [
                   "Coordinates within hub",

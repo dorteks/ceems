@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Download, Filter, Plus, RotateCcw, Search } from "lucide-react";
+import {
+  Download,
+  Filter,
+  Pencil,
+  Plus,
+  RotateCcw,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 import {
   Table,
   TableBody,
@@ -32,6 +41,22 @@ import {
   states,
 } from "../data/ceems";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
+type CustomerTableRow = {
+  id: string | number;
+  account_number: string;
+  meter_number?: string | null;
+  surname: string;
+  first_name: string;
+  phone?: string | null;
+  nin?: string | null;
+  tariff?: string | null;
+  lga?: string | null;
+  feeder_name?: string | null;
+  status?: string | null;
+};
 
 // export const Route = createFileRoute("/customers/")({
 //   head: () => ({
@@ -49,13 +74,21 @@ import Link from "next/link";
 // });
 
 export default function CustomersPage() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("All statuses");
   const [lga, setLga] = useState("All LGAs");
   const [feeder, setFeeder] = useState("All feeders");
   const [selected, setSelected] = useState<string[]>([]);
-  const [apiCustomers, setApiCustomers] = useState<typeof customers>([]);
+  const [apiCustomers, setApiCustomers] = useState<CustomerTableRow[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<CustomerTableRow | null>(
+    null,
+  );
+  const [deletingId, setDeletingId] = useState<string | number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(214806);
 
   // Fetch customers from API
   useEffect(() => {
@@ -63,14 +96,27 @@ export default function CustomersPage() {
       try {
         const response = await fetch("/api/customers?page=1&size=100");
         const data = await response.json();
-        console.log("API Response:", data);
-        if (data.items) {
-          setApiCustomers(data.items);
+        if (!response.ok) {
+          throw new Error(data?.error || "Failed to fetch customers");
         }
+
+        setApiCustomers(
+          Array.isArray(data.items)
+            ? data.items.map((item: CustomerTableRow) => ({
+                ...item,
+                id: item.id,
+              }))
+            : [],
+        );
+        setTotalCount(typeof data.total === "number" ? data.total : 0);
+        setLoadError(null);
       } catch (error) {
         console.error("Failed to fetch customers:", error);
+        setTotalCount(214806);
+        setLoadError("Using demo data while the API is unavailable.");
       } finally {
         setLoading(false);
+        setHasLoaded(true);
       }
     };
 
@@ -78,30 +124,30 @@ export default function CustomersPage() {
   }, []);
 
   const rows = useMemo(() => {
-    const dataSource = apiCustomers.length > 0 ? apiCustomers : customers;
+    const dataSource = loadError ? customers : hasLoaded ? apiCustomers : [];
     return dataSource.filter((c) => {
       const q = query.trim().toLowerCase();
       const matchQ =
         !q ||
         [
           c.account_number,
-          c.meter_number,
+          c.meter_number ?? "",
           c.surname,
           c.first_name,
-          c.phone,
-          c.nin,
+          c.phone ?? "",
+          c.nin ?? "",
         ]
           .join(" ")
           .toLowerCase()
           .includes(q);
       return (
         matchQ &&
-        (status === "All statuses" || c.status === status) &&
-        (lga === "All LGAs" || c.lga === lga) &&
-        (feeder === "All feeders" || c.feeder_name === feeder)
+        (status === "All statuses" || (c.status ?? "") === status) &&
+        (lga === "All LGAs" || (c.lga ?? "") === lga) &&
+        (feeder === "All feeders" || (c.feeder_name ?? "") === feeder)
       );
     });
-  }, [query, status, lga, feeder, apiCustomers]);
+  }, [query, status, lga, feeder, apiCustomers, hasLoaded, loadError]);
 
   const reset = () => {
     setQuery("");
@@ -115,11 +161,44 @@ export default function CustomersPage() {
       s.includes(id) ? s.filter((x) => x !== id) : [...s, id],
     );
 
+  const handleDelete = async () => {
+    if (!deleteTarget) {
+      return;
+    }
+
+    const targetId = deleteTarget.id;
+    setDeletingId(targetId);
+
+    try {
+      const response = await fetch(`/api/customers/${targetId}`, {
+        method: "DELETE",
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Failed to delete customer");
+      }
+
+      setApiCustomers((current) =>
+        current.filter((item) => String(item.id) !== String(targetId)),
+      );
+      setSelected((current) => current.filter((id) => id !== String(targetId)));
+      toast.success("Customer deleted");
+      setDeleteTarget(null);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete customer",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <>
       <PageHeader
         title="Customers"
-        description={`${rows.length} records shown${loading ? " (loading...)" : ""}`}
+        description={`${rows.length} records shown${loading ? " (loading...)" : ""}${loadError ? " (demo data)" : ""}`}
         actions={
           <>
             <Button variant="outline" size="sm">
@@ -217,11 +296,15 @@ export default function CustomersPage() {
               </TableHeader>
               <TableBody>
                 {rows.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell>
+                  <TableRow
+                    key={String(c.id)}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => router.push(`/customers/${String(c.id)}`)}
+                  >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <Checkbox
-                        checked={selected.includes(c.id)}
-                        onCheckedChange={() => toggle(c.id)}
+                        checked={selected.includes(String(c.id))}
+                        onCheckedChange={() => toggle(String(c.id))}
                         aria-label={`Select ${c.account_number}`}
                       />
                     </TableCell>
@@ -254,9 +337,30 @@ export default function CustomersPage() {
                       <StatusBadge value={c.status} />
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        <Link href={`/customers/${c.id}`}>View</Link>
-                      </Button>
+                      <div
+                        className="flex justify-end gap-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          asChild
+                          aria-label={`Edit ${c.account_number}`}
+                        >
+                          <Link href={`/customers/${String(c.id)}/edit`}>
+                            <Pencil className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          aria-label={`Delete ${c.account_number}`}
+                          onClick={() => setDeleteTarget(c)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -277,7 +381,7 @@ export default function CustomersPage() {
       </Card>
 
       <div className="mt-4 flex flex-col items-center justify-between gap-3 text-sm text-muted-foreground sm:flex-row">
-        <p>Showing 1–{rows.length} of 214,806 records</p>
+        <p>Showing 1–{rows.length} of {totalCount} records</p>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" disabled>
             Previous
@@ -287,6 +391,28 @@ export default function CustomersPage() {
           </Button>
         </div>
       </div>
+
+      <DeleteConfirmationDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+          }
+        }}
+        onConfirm={handleDelete}
+        title={
+          deleteTarget
+            ? `Delete ${deleteTarget.account_number}?`
+            : "Delete customer?"
+        }
+        description={
+          deleteTarget
+            ? `This will permanently delete ${deleteTarget.surname} ${deleteTarget.first_name}.`
+            : "This action cannot be undone."
+        }
+        confirmLabel="Delete customer"
+        isDeleting={Boolean(deletingId)}
+      />
     </>
   );
 }
