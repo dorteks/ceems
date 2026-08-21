@@ -139,7 +139,7 @@ function mapCustomerRow(row: Record<string, unknown>) {
     feeder_name: cleanValue(customer.feeder_name),
     feeder_band: cleanValue(customer.feeder_band),
 
-    status: cleanValue(customer.status),
+    status: normalizeEnum(customer.status),
     business_hub: cleanValue(customer.business_hub),
     region: cleanValue(customer.region),
 

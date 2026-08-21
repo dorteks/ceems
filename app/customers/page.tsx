@@ -259,7 +259,15 @@ export default function CustomersPage() {
         description={`${rows.length} records shown${loading ? " (loading...)" : ""}${loadError ? " (demo data)" : ""}`}
         actions={
           <>
-            <Button variant="outline" size="sm">
+            <Button
+              onClick={() =>
+                toast.message("Coming soon", {
+                  position: "top-right",
+                })
+              }
+              variant="outline"
+              size="sm"
+            >
               <Download className="size-4" /> Export
             </Button>
             <Button size="sm">
@@ -343,7 +351,7 @@ export default function CustomersPage() {
                   <TableHead>Customer</TableHead>
                   <TableHead>Account & Meter no.</TableHead>
                   <TableHead className="hidden md:table-cell">
-                    NIN/CATEGORY
+                    Nin/Category
                   </TableHead>
                   <TableHead className="hidden lg:table-cell">
                     Address
@@ -371,7 +379,7 @@ export default function CustomersPage() {
                     </TableCell>
 
                     <TableCell>
-                      <p className="max-w-[200px] whitespace-normal font-semibold pb-0.5">
+                      <p className="max-w-[200px] whitespace-normal uppercase font-semibold pb-0.5">
                         {c.surname} {c.first_name}
                       </p>
                       <p className="text-numeric text-sm font-medium text-muted-foreground">
@@ -400,7 +408,7 @@ export default function CustomersPage() {
                       </div>
                     </TableCell>
 
-                    <TableCell className="hidden lg:table-cell">
+                    <TableCell className="hidden lg:table-cell uppercase">
                       <div className="flex max-w-[220px] flex-col items-start gap-0.5">
                         <p
                           className="w-full truncate font-semibold"

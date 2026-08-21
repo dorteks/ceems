@@ -344,7 +344,6 @@ export default function ImportPage() {
                             <TableRow>
                               <TableHead>Account</TableHead>
                               <TableHead>Surname</TableHead>
-                              <TableHead>Firstname</TableHead>
                               <TableHead>Phone</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -355,7 +354,6 @@ export default function ImportPage() {
                                   {r.account_number}
                                 </TableCell>
                                 <TableCell>{r.surname}</TableCell>
-                                <TableCell>{r.first_name}</TableCell>
                                 <TableCell>{r.phone}</TableCell>
                               </TableRow>
                             ))}
