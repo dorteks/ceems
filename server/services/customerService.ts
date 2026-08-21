@@ -1,4 +1,13 @@
-import { Prisma } from "@prisma/client";
+import {
+  CustomerCategory,
+  CustomerType,
+  MeterPhase,
+  MeterType,
+  PremiseType,
+  Prisma,
+  ServiceCenter,
+  Status,
+} from "@prisma/client";
 
 import { prisma } from "../db/prisma";
 
@@ -47,16 +56,34 @@ function normalizeCustomerData(
     first_name: normalizeRequiredString(data.first_name),
     other_name: normalizeString(data.other_name),
     nin: normalizeString(data.nin),
-    customer_type: normalizeString(data.customer_type),
-    customer_category: normalizeString(data.customer_category),
-    premise_type: normalizeString(data.premise_type),
-    meter_type: normalizeString(data.meter_type),
-    meter_phase: normalizeString(data.meter_phase),
+    customer_type: normalizeString(data.customer_type) as
+      | CustomerType
+      | null
+      | undefined,
+    customer_category: normalizeString(data.customer_category) as
+      | CustomerCategory
+      | null
+      | undefined,
+    premise_type: normalizeString(data.premise_type) as
+      | PremiseType
+      | null
+      | undefined,
+    meter_type: normalizeString(data.meter_type) as
+      | MeterType
+      | null
+      | undefined,
+    meter_phase: normalizeString(data.meter_phase) as
+      | MeterPhase
+      | null
+      | undefined,
     address: normalizeString(data.address),
     city: normalizeString(data.city),
     state: normalizeString(data.state),
     lga: normalizeString(data.lga),
-    service_center: normalizeString(data.service_center),
+    service_center: normalizeString(data.service_center) as
+      | ServiceCenter
+      | null
+      | undefined,
     service_code: normalizeString(data.service_code),
     tariff: normalizeString(data.tariff),
     longitude: normalizeNumber(data.longitude),
@@ -69,7 +96,7 @@ function normalizeCustomerData(
     feeder_id: normalizeString(data.feeder_id),
     feeder_name: normalizeString(data.feeder_name),
     feeder_band: normalizeString(data.feeder_band),
-    status: normalizeString(data.status),
+    status: normalizeString(data.status) as Status | null | undefined,
     business_hub: normalizeString(data.business_hub),
     region: normalizeString(data.region),
     enumerator_name: normalizeString(data.enumerator_name),
@@ -85,7 +112,10 @@ export async function createCustomer(data: Record<string, unknown>) {
   return prisma.customer.create({ data: normalizeCustomerData(data) });
 }
 
-export async function updateCustomer(id: number, data: Record<string, unknown>) {
+export async function updateCustomer(
+  id: number,
+  data: Record<string, unknown>,
+) {
   return prisma.customer.update({
     where: { id },
     data: normalizeCustomerData(data) as Prisma.CustomerUncheckedUpdateInput,
@@ -124,7 +154,10 @@ export async function importCustomers(
   let imported = 0;
 
   for (let i = 0; i < customers.length; i += batchSize) {
-    const batch = customers.slice(i, i + batchSize) as Prisma.CustomerCreateManyInput[];
+    const batch = customers.slice(
+      i,
+      i + batchSize,
+    ) as Prisma.CustomerCreateManyInput[];
 
     const result = await prisma.customer.createMany({
       data: batch,

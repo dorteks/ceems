@@ -9,6 +9,12 @@ import {
   type UserStatus,
 } from "@/lib/auth/types";
 import { generateTemporaryPassword } from "@/lib/auth/password";
+import {
+  Hub as PrismaHub,
+  User,
+  UserRole as PrismaUserRole,
+  UserStatus as PrismaUserStatus,
+} from "@prisma/client";
 
 export { HUBS, ROLES };
 export type { Hub, Role, UserRecord };
@@ -17,8 +23,8 @@ function normalize(value: string) {
   return value.trim().toLowerCase();
 }
 
-function toRole(role: string): Role {
-  const map: Record<string, Role> = {
+function toRole(role: PrismaUserRole): Role {
+  const map: Record<PrismaUserRole, Role> = {
     SUPER_ADMINISTRATOR: "Super Administrator",
     DATA_MANAGER: "Data Manager",
     SUPERVISOR: "Supervisor",
@@ -29,8 +35,8 @@ function toRole(role: string): Role {
   return map[role] ?? "Viewer";
 }
 
-function toHub(hub: string): Hub {
-  const map: Record<string, Hub> = {
+function toHub(hub: PrismaHub): Hub {
+  const map: Record<PrismaHub, Hub> = {
     ALL: "All",
     OSOGBO: "Osogbo",
     EDE: "Ede",
@@ -41,12 +47,12 @@ function toHub(hub: string): Hub {
   return map[hub] ?? "All";
 }
 
-function toStatus(status: string): UserStatus {
-  return status === "SUSPENDED" ? "Suspended" : "Active";
+function toStatus(status: PrismaUserStatus): UserStatus {
+  return status === PrismaUserStatus.SUSPENDED ? "Suspended" : "Active";
 }
 
-function fromRole(role: Role) {
-  const map: Record<Role, string> = {
+function fromRole(role: Role): PrismaUserRole {
+  const map: Record<Role, PrismaUserRole> = {
     "Super Administrator": "SUPER_ADMINISTRATOR",
     "Data Manager": "DATA_MANAGER",
     Supervisor: "SUPERVISOR",
@@ -57,8 +63,8 @@ function fromRole(role: Role) {
   return map[role];
 }
 
-function fromHub(hub: Hub) {
-  const map: Record<Hub, string> = {
+function fromHub(hub: Hub): PrismaHub {
+  const map: Record<Hub, PrismaHub> = {
     All: "ALL",
     Osogbo: "OSOGBO",
     Ede: "EDE",
@@ -69,20 +75,7 @@ function fromHub(hub: Hub) {
   return map[hub];
 }
 
-function serializeUser(user: {
-  id: number;
-  username: string;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  role: string;
-  hub: string;
-  status: string;
-  must_change_password: boolean;
-  last_login_at: Date | null;
-  created_at: Date;
-  updated_at: Date;
-}): UserRecord {
+function serializeUser(user: User): UserRecord {
   return {
     id: user.id,
     username: user.username,
@@ -220,7 +213,7 @@ export async function createUser(input: {
       phone: input.phone?.trim() || null,
       role: fromRole(input.role),
       hub: fromHub(input.hub),
-      status: "ACTIVE",
+      status: PrismaUserStatus.ACTIVE,
       password_hash: generatePasswordHash(password),
       must_change_password: true,
       created_by: input.createdBy ?? null,
