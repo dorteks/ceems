@@ -1,3 +1,4 @@
+import { Prisma } from "@/generated/prisma/client";
 import {
   type CustomerCategoryValue,
   type CustomerTypeValue,
@@ -152,8 +153,10 @@ export async function importCustomers(
   for (let i = 0; i < customers.length; i += batchSize) {
     const batch = customers.slice(i, i + batchSize);
 
+    const prepared = batch.map((c) => normalizeCustomerData(c));
+
     const result = await prisma.customer.createMany({
-      data: batch,
+      data: prepared as Prisma.CustomerCreateManyInput[],
       skipDuplicates: true,
     });
 
