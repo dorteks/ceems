@@ -7,7 +7,7 @@ import {
   type ServiceCenterValue,
   type StatusValue,
 } from "@/lib/prisma-enums";
-import { prisma } from "../db/prisma";
+import { prisma } from "@/server/db/prisma";
 
 function normalizeString(value: unknown) {
   if (typeof value !== "string") {

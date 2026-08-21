@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Zap, LogIn } from "lucide-react";
+import { CheckCircle2, Loader2, LogIn, ShieldCheck, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +38,17 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [dbCheckState, setDbCheckState] = useState<
+    | { status: "idle" }
+    | { status: "loading" }
+    | {
+        status: "success";
+        users: number;
+        customers: number;
+        durationMs: number;
+      }
+    | { status: "error"; message: string }
+  >({ status: "idle" });
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted px-4 py-10">
@@ -111,6 +122,89 @@ export default function LoginPage() {
                 <LogIn className="size-4" /> Sign in
               </Button>
             </form>
+
+            <div className="mt-4 rounded-lg border bg-muted/30 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Database check</p>
+                  <p className="text-xs text-muted-foreground">
+                    Hit the public health endpoint to confirm the app can reach
+                    the database.
+                  </p>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={async () => {
+                    setDbCheckState({ status: "loading" });
+
+                    try {
+                      const response = await fetch("/api/health/db", {
+                        method: "GET",
+                        cache: "no-store",
+                      });
+                      const data = (await response.json().catch(() => null)) as
+                        | {
+                            ok?: boolean;
+                            error?: string;
+                            users?: number;
+                            customers?: number;
+                            durationMs?: number;
+                          }
+                        | null;
+
+                      if (!response.ok || !data?.ok) {
+                        setDbCheckState({
+                          status: "error",
+                          message:
+                            data?.error ??
+                            "The database health check did not succeed.",
+                        });
+                        return;
+                      }
+
+                      setDbCheckState({
+                        status: "success",
+                        users: data.users ?? 0,
+                        customers: data.customers ?? 0,
+                        durationMs: data.durationMs ?? 0,
+                      });
+                    } catch {
+                      setDbCheckState({
+                        status: "error",
+                        message: "Unable to reach the health-check endpoint.",
+                      });
+                    }
+                  }}
+                  disabled={dbCheckState.status === "loading"}
+                >
+                  {dbCheckState.status === "loading" ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="size-4" />
+                  )}
+                  Check database
+                </Button>
+              </div>
+
+              {dbCheckState.status === "success" ? (
+                <Alert className="mt-4 border-success/40 bg-success/10">
+                  <CheckCircle2 className="size-4 text-success" />
+                  <AlertDescription>
+                    Connected. {dbCheckState.users} users and{" "}
+                    {dbCheckState.customers} customers are reachable in{" "}
+                    {dbCheckState.durationMs}ms.
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+
+              {dbCheckState.status === "error" ? (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertDescription>{dbCheckState.message}</AlertDescription>
+                </Alert>
+              ) : null}
+            </div>
 
             <p className="mt-6 rounded-md bg-secondary p-3 text-xs text-muted-foreground">
               Demo access - username{" "}

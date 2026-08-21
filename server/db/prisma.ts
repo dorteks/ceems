@@ -1,4 +1,5 @@
 import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient as GeneratedPrismaClient } from "@/generated/prisma/client";
 
 export type UserRow = {
   id: number;
@@ -64,13 +65,14 @@ type CustomerRow = {
   updated_by: string | null;
 };
 
-type PrismaClient = {
+type PrismaClient = InstanceType<typeof GeneratedPrismaClient> & {
   user: {
     findMany(args?: unknown): Promise<UserRow[]>;
     findUnique(args?: unknown): Promise<UserRow | null>;
     findFirst(args?: unknown): Promise<UserRow | null>;
     update(args?: unknown): Promise<UserRow>;
     create(args?: unknown): Promise<UserRow>;
+    count(args?: unknown): Promise<number>;
   };
   customer: {
     findUnique(args?: unknown): Promise<CustomerRow | null>;
@@ -87,65 +89,16 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
-console.log(process.env.DATABASE_URL, "DB URL");
-
-let _prisma: PrismaClient | undefined = undefined;
-
-try {
-  // Try to require the generated Prisma client. This can fail during build
-  // (when the client hasn't been generated), so wrap in try/catch and fall
-  // back to a lightweight stub that allows Next.js to collect routes.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const pkg = require("@prisma/client") as unknown;
-  const PrismaClientCtor = (
-    pkg as unknown as {
-      PrismaClient?: new (options: { adapter: PrismaPg }) => PrismaClient;
-    }
-  ).PrismaClient as new (options: { adapter: PrismaPg }) => PrismaClient;
-
-  _prisma = global.prisma as PrismaClient | undefined;
-  if (!_prisma) {
-    _prisma = new PrismaClientCtor({ adapter });
-    if (process.env.NODE_ENV !== "production") {
-      // cache across module reloads in dev
-      (global as unknown as { prisma?: PrismaClient }).prisma = _prisma;
-    }
-  }
-} catch (err) {
-  // Provide a minimal stub to avoid build-time failures when the Prisma
-  // generated client is not available. Runtime operations that expect a
-  // real database will throw when called (or return sensible defaults).
-  const stub = {
-    user: {
-      findMany: async () => [],
-      findUnique: async () => null,
-      findFirst: async () => null,
-      update: async () => {
-        throw err;
-      },
-      create: async () => {
-        throw err;
-      },
-    },
-    customer: {
-      findUnique: async () => null,
-      findMany: async () => [],
-      count: async () => 0,
-      create: async () => {
-        throw err;
-      },
-      update: async () => {
-        throw err;
-      },
-      delete: async () => {
-        throw err;
-      },
-      createMany: async () => ({ count: 0 }),
-    },
-  };
-
-  _prisma = (global.prisma as PrismaClient) ?? (stub as PrismaClient);
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL is not set.");
 }
 
-export const prisma = _prisma as PrismaClient;
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+
+export const prisma =
+  globalForPrisma.prisma ?? new GeneratedPrismaClient({ adapter });
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}

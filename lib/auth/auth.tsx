@@ -7,13 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { DEFAULT_PASSWORD } from "./password";
-import {
-  HUBS,
-  ROLES,
-  type Hub,
-  type Role,
-  type UserRecord,
-} from "./types";
+import { HUBS, ROLES, type Hub, type Role, type UserRecord } from "./types";
 
 export { ROLES, HUBS };
 export type { Role, Hub, UserRecord as AccountRecord };
@@ -113,15 +107,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           credentials: "include",
           body: JSON.stringify({ identifier, password }),
         });
+        console.log(response, "RESP");
 
-        const data = (await response.json().catch(() => null)) as
-          | {
-              user?: UserRecord;
-              users?: UserRecord[];
-              mustChangePassword?: boolean;
-              error?: string;
-            }
-          | null;
+        const data = (await response.json().catch(() => null)) as {
+          user?: UserRecord;
+          users?: UserRecord[];
+          mustChangePassword?: boolean;
+          error?: string;
+        } | null;
 
         if (!response.ok || !data?.user) {
           return {
@@ -160,9 +153,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           credentials: "include",
           body: JSON.stringify(input),
         });
-        const data = (await response.json().catch(() => null)) as
-          | { user?: UserRecord; generatedPassword?: string; error?: string }
-          | null;
+        const data = (await response.json().catch(() => null)) as {
+          user?: UserRecord;
+          generatedPassword?: string;
+          error?: string;
+        } | null;
 
         if (!response.ok || !data?.user) {
           return {
@@ -187,11 +182,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ currentPassword: current, nextPassword: next }),
+          body: JSON.stringify({
+            currentPassword: current,
+            nextPassword: next,
+          }),
         });
-        const data = (await response.json().catch(() => null)) as
-          | { error?: string; user?: UserRecord }
-          | null;
+        const data = (await response.json().catch(() => null)) as {
+          error?: string;
+          user?: UserRecord;
+        } | null;
 
         if (!response.ok) {
           return {

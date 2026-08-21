@@ -1,5 +1,5 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
-import { prisma, type UserRow as DbUserRow } from "../db/prisma";
+import { prisma, type UserRow as DbUserRow } from "@/server/db/prisma";
 import {
   HUBS,
   ROLES,

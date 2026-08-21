@@ -2,7 +2,7 @@
 
 import * as XLSX from "xlsx";
 import { importCustomers } from "./customerService";
-import { prisma } from "../db/prisma";
+import { prisma } from "@/server/db/prisma";
 
 const HEADER_MAP: Record<string, string> = {
   Account_number: "account_number",
