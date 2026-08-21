@@ -228,7 +228,7 @@ export function PageHeader({
   actions,
 }: {
   title: string;
-  description?: string;
+  description?: string | ReactNode;
   actions?: ReactNode;
 }) {
   return (

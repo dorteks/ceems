@@ -39,6 +39,7 @@ import {
   kpis,
 } from "../data/ceems";
 import Link from "next/link";
+import { DayDisplay } from "@/components/dashboard/time-display";
 
 // export const Route = createFileRoute("/")({
 //   head: () => ({
@@ -71,7 +72,12 @@ export default function Dashboard() {
     <>
       <PageHeader
         title="Operations dashboard"
-        description="Osun Distribution · data as of today 16:00"
+        description={
+          <div className="flex flex-row items-center">
+            <p>Osun Distribution · Data as of today</p>
+            <DayDisplay />
+          </div>
+        }
         actions={
           <>
             <Button variant="outline" size="sm">

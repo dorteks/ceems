@@ -3,9 +3,11 @@
 import React, { useRef, useState } from "react";
 import {
   AlertTriangle,
+  Check,
   CheckCircle2,
   Download,
   FileSpreadsheet,
+  Loader2,
   UploadCloud,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +18,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -53,10 +62,20 @@ const steps = [
   "Commit",
 ];
 
+// Tracks the blocking progress modal shown for the upload/preview request and
+// the commit request. `status: "loading"` is the only state that suppresses
+// closing — once it resolves to "success" or "error" the person can dismiss it.
+type ImportStage = "uploading" | "committing" | null;
+type StageStatus = "loading" | "success" | "error" | null;
+
 export default function ImportPage() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+
+  const [stage, setStage] = useState<ImportStage>(null);
+  const [stageStatus, setStageStatus] = useState<StageStatus>(null);
+  const [stageMessage, setStageMessage] = useState<string | null>(null);
 
   type ImportPreviewRow = {
     account_number?: string;
@@ -81,6 +100,15 @@ export default function ImportPage() {
   const [result, setResult] = useState<ImportResult | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  const closeStageModal = () => {
+    // Guard against closing mid-request — only ever called after resolution,
+    // but keep the check here too since it's the single source of truth.
+    if (stageStatus === "loading") return;
+    setStage(null);
+    setStageStatus(null);
+    setStageMessage(null);
+  };
+
   const onFile = async (file: File) => {
     setMessage(null);
     setResult(null);
@@ -100,6 +128,9 @@ export default function ImportPage() {
 
     try {
       setUploading(true);
+      setStage("uploading");
+      setStageStatus("loading");
+      setStageMessage(null);
 
       const fd = new FormData();
       fd.append("file", file);
@@ -111,14 +142,22 @@ export default function ImportPage() {
 
       const json = await res.json();
       if (!res.ok) {
-        setMessage(json?.error || "Import failed");
+        const errMsg = json?.error || "Import failed";
+        setMessage(errMsg);
+        setStageStatus("error");
+        setStageMessage(errMsg);
       } else {
         setResult(json);
-        setMessage(json.message || "Preview ready");
+        const okMsg = json.message || "Preview ready";
+        setMessage(okMsg);
+        setStageStatus("success");
+        setStageMessage(okMsg);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setMessage(msg || "Upload failed");
+      setStageStatus("error");
+      setStageMessage(msg || "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -143,6 +182,9 @@ export default function ImportPage() {
 
     setUploading(true);
     setMessage(null);
+    setStage("committing");
+    setStageStatus("loading");
+    setStageMessage(null);
 
     try {
       const fd = new FormData();
@@ -155,14 +197,21 @@ export default function ImportPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setMessage(json?.error || "Commit failed");
+        const errMsg = json?.error || "Commit failed";
+        setMessage(errMsg);
+        setStageStatus("error");
+        setStageMessage(errMsg);
       } else {
         setResult(json);
         setMessage("Import committed");
+        setStageStatus("success");
+        setStageMessage("Your import has been committed successfully.");
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setMessage(msg || "Commit failed");
+      setStageStatus("error");
+      setStageMessage(msg || "Commit failed");
     } finally {
       setUploading(false);
     }
@@ -189,6 +238,23 @@ export default function ImportPage() {
     a.download = "import-errors.csv";
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  // Drives the step tracker below from what's actually happened so far,
+  // rather than a hardcoded "step 1 active" — Map columns & Validate are
+  // folded into the same request as Upload (the API does both in one call),
+  // so they complete together; Review duplicates is "current" once a preview
+  // is back and stays that way until the commit request succeeds.
+  const hasUploadedPreview = Boolean(result && result.preview);
+  const hasCommitted = Boolean(result && result.imported !== undefined);
+
+  const currentStepIndex = hasCommitted ? 4 : hasUploadedPreview ? 3 : 0;
+
+  const getStepStatus = (i: number): "complete" | "current" | "upcoming" => {
+    if (hasCommitted) return "complete";
+    if (i < currentStepIndex) return "complete";
+    if (i === currentStepIndex) return "current";
+    return "upcoming";
   };
 
   const downloadTemplate = () => {
@@ -368,29 +434,60 @@ export default function ImportPage() {
 
             <Separator className="my-6" />
 
-            <ol className="grid gap-3 sm:grid-cols-5">
-              {steps.map((s, i) => (
-                <li
-                  key={s}
-                  className="flex items-center gap-2 sm:flex-col sm:items-start"
-                >
-                  <span
-                    className={`flex size-6 items-center justify-center rounded-full text-xs font-semibold ${
-                      i === 0
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {i + 1}
-                  </span>
-                  <span
-                    className={`text-xs ${i === 0 ? "font-medium" : "text-muted-foreground"}`}
-                  >
-                    {s}
-                  </span>
-                </li>
-              ))}
-            </ol>
+            <div
+              className="flex items-start"
+              role="list"
+              aria-label="Import progress"
+            >
+              {steps.map((s, i) => {
+                const status = getStepStatus(i);
+                return (
+                  <React.Fragment key={s}>
+                    {i > 0 && (
+                      <div
+                        aria-hidden
+                        className={`mt-3 h-0.5 flex-1 shrink transition-colors ${
+                          getStepStatus(i - 1) === "complete"
+                            ? "bg-success"
+                            : "bg-border"
+                        }`}
+                      />
+                    )}
+                    <div
+                      role="listitem"
+                      className="flex shrink-0 flex-col items-center gap-1.5 text-center"
+                    >
+                      <span
+                        className={`flex size-6 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
+                          status === "complete"
+                            ? "bg-success text-success-foreground"
+                            : status === "current"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {status === "complete" ? (
+                          <Check className="size-3.5" />
+                        ) : (
+                          i + 1
+                        )}
+                      </span>
+                      <span
+                        className={`w-20 text-xs ${
+                          status === "upcoming"
+                            ? "text-muted-foreground"
+                            : status === "complete"
+                              ? "font-medium text-success"
+                              : "font-medium text-foreground"
+                        }`}
+                      >
+                        {s}
+                      </span>
+                    </div>
+                  </React.Fragment>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
 
@@ -483,6 +580,67 @@ export default function ImportPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Blocking progress modal for both the upload/preview request and the
+          commit request. While stageStatus is "loading" the onOpenChange guard
+          below refuses to close it — no Escape, no outside click, no X button —
+          it only becomes dismissible once the request resolves pass or fail. */}
+      <Dialog
+        open={stage !== null}
+        onOpenChange={(open) => {
+          if (!open) closeStageModal();
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-sm"
+          onInteractOutside={(e) => {
+            if (stageStatus === "loading") e.preventDefault();
+          }}
+          onEscapeKeyDown={(e) => {
+            if (stageStatus === "loading") e.preventDefault();
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>
+              {stage === "committing" ? "Committing import" : "Uploading file"}
+            </DialogTitle>
+            <DialogDescription>
+              {stageStatus === "loading"
+                ? stage === "committing"
+                  ? "Writing validated rows to the database. Please keep this window open."
+                  : "Validating your file and building a preview. Please keep this window open."
+                : stage === "committing"
+                  ? "Commit finished."
+                  : "Upload finished."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
+            {stageStatus === "loading" && (
+              <Loader2 className="size-10 animate-spin text-primary" />
+            )}
+            {stageStatus === "success" && (
+              <CheckCircle2 className="size-10 text-success" />
+            )}
+            {stageStatus === "error" && (
+              <AlertTriangle className="size-10 text-destructive" />
+            )}
+            <p className="text-sm text-muted-foreground">
+              {stageStatus === "loading"
+                ? "This can take a moment for large files — don't close this window."
+                : stageMessage}
+            </p>
+          </div>
+
+          {stageStatus !== "loading" && (
+            <div className="flex justify-end">
+              <Button size="sm" onClick={closeStageModal}>
+                Close
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
