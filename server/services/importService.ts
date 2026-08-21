@@ -218,7 +218,7 @@ export async function parseAndImportXlsx(
   const commit = !!options?.commit;
   const previewSize = options?.previewSize ?? 20;
   const checkDuplicates = options?.checkDuplicates ?? true;
-  const workbook = XLSX.read(fileBuffer as any, {
+  const workbook = XLSX.read(fileBuffer as unknown as ArrayBuffer, {
     type: "buffer",
     cellDates: true,
   });
@@ -238,7 +238,11 @@ export async function parseAndImportXlsx(
   const mapped = rows.map(mapCustomerRow);
 
   const validCustomers: Record<string, unknown>[] = [];
-  const errors: any[] = [];
+  const errors: Array<{
+    row: number;
+    errors: string[];
+    data: Record<string, unknown>;
+  }> = [];
 
   for (let i = 0; i < mapped.length; i++) {
     const rowNum = i + 2;
@@ -272,7 +276,7 @@ export async function parseAndImportXlsx(
     validCustomers.push(mapped[i]);
   }
 
-  let duplicates: any[] = [];
+  const duplicates: Array<{ data: Record<string, unknown> }> = [];
   let toImport = validCustomers;
 
   if (checkDuplicates && validCustomers.length) {

@@ -456,7 +456,9 @@ export default function CustomersPage() {
                           size="icon"
                           className="text-destructive hover:text-destructive"
                           aria-label={`Delete ${c.account_number}`}
-                          onClick={() => setDeleteTarget(c)}
+                          onClick={() =>
+                            setDeleteTarget(c as unknown as CustomerTableRow)
+                          }
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>

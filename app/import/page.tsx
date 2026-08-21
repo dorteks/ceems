@@ -57,7 +57,28 @@ export default function ImportPage() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [result, setResult] = useState<any | null>(null);
+
+  type ImportPreviewRow = {
+    account_number?: string;
+    surname?: string;
+    first_name?: string;
+    phone?: string;
+    [key: string]: unknown;
+  };
+
+  type ImportResult = {
+    total_rows?: number;
+    preview?: ImportPreviewRow[];
+    valid_count?: number;
+    invalid_count?: number;
+    duplicates_count?: number;
+    imported?: number;
+    errors?: Array<{ row?: number; errors?: string[] }>;
+    duplicates?: unknown[];
+    message?: string;
+  };
+
+  const [result, setResult] = useState<ImportResult | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const onFile = async (file: File) => {
@@ -95,8 +116,9 @@ export default function ImportPage() {
         setResult(json);
         setMessage(json.message || "Preview ready");
       }
-    } catch (err: any) {
-      setMessage(err?.message || "Upload failed");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setMessage(msg || "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -138,8 +160,9 @@ export default function ImportPage() {
         setResult(json);
         setMessage("Import committed");
       }
-    } catch (err: any) {
-      setMessage(err?.message || "Commit failed");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setMessage(msg || "Commit failed");
     } finally {
       setUploading(false);
     }
@@ -326,7 +349,7 @@ export default function ImportPage() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {result.preview.map((r: any, idx: number) => (
+                            {result.preview?.map((r, idx) => (
                               <TableRow key={idx}>
                                 <TableCell className="font-medium">
                                   {r.account_number}

@@ -135,10 +135,7 @@ export async function getUserByLogin(identifier: string) {
   const normalized = normalize(identifier);
   const user = await prisma.user.findFirst({
     where: {
-      OR: [
-        { username: normalized },
-        { email: normalized },
-      ],
+      OR: [{ username: normalized }, { email: normalized }],
     },
   });
 
@@ -169,7 +166,8 @@ export async function authenticateUser(identifier: string, password: string) {
   return {
     ok: true as const,
     user: serializeUser(refreshed ?? user),
-    mustChangePassword: refreshed?.must_change_password ?? user.must_change_password,
+    mustChangePassword:
+      refreshed?.must_change_password ?? user.must_change_password,
   };
 }
 
@@ -202,10 +200,7 @@ export async function createUser(input: {
 
   const existing = await prisma.user.findFirst({
     where: {
-      OR: [
-        { username },
-        ...(email ? [{ email }] : []),
-      ],
+      OR: [{ username }, ...(email ? [{ email }] : [])],
     },
   });
 

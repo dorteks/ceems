@@ -21,11 +21,11 @@ export async function POST(req: Request) {
       { message: commit ? "Import completed" : "Preview generated", ...result },
       { status: 201 },
     );
-  } catch (err: any) {
-    // eslint-disable-next-line no-console
+  } catch (err: unknown) {
     console.error("Import failed:", err);
+    const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      { error: err?.message || "Import failed" },
+      { error: message || "Import failed" },
       { status: 500 },
     );
   }

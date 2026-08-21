@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,55 +8,65 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
-import { Check, Laptop2, MoonStar, SunMedium } from 'lucide-react';
-import { useTheme } from 'next-themes';
-import { useEffect, useMemo, useState } from 'react';
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import { Check, Laptop2, MoonStar, SunMedium } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useEffect, useMemo, useState } from "react";
 
 const themeOptions = [
-  { value: 'light', label: 'Light', Icon: SunMedium },
-  { value: 'dark', label: 'Dark', Icon: MoonStar },
-  { value: 'system', label: 'System', Icon: Laptop2 },
+  { value: "light", label: "Light", Icon: SunMedium },
+  { value: "dark", label: "Dark", Icon: MoonStar },
+  { value: "system", label: "System", Icon: Laptop2 },
 ] as const;
 
-type ThemeOption = (typeof themeOptions)[number]['value'];
+type ThemeOption = (typeof themeOptions)[number]["value"];
 
-export function ThemeSwitcher({ size = 'default' }: { size?: 'default' | 'icon' }) {
+export function ThemeSwitcher({
+  size = "default",
+}: {
+  size?: "default" | "icon";
+}) {
   const { theme, setTheme, systemTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(t);
+  }, []);
 
   const resolvedTheme = useMemo<ThemeOption>(() => {
     if (!mounted) {
-      return 'system';
+      return "system";
     }
-    if (theme === 'system') {
-      return (systemTheme as ThemeOption) ?? 'system';
+    if (theme === "system") {
+      return (systemTheme as ThemeOption) ?? "system";
     }
     return theme as ThemeOption;
   }, [mounted, theme, systemTheme]);
 
-  const selectedTheme = (theme as ThemeOption) ?? 'system';
-  const displayTheme = selectedTheme === 'system' ? 'system' : resolvedTheme;
+  const selectedTheme = (theme as ThemeOption) ?? "system";
+  const displayTheme = selectedTheme === "system" ? "system" : resolvedTheme;
   const ActiveIcon =
-    themeOptions.find(option => option.value === (displayTheme ?? 'system'))?.Icon || SunMedium;
+    themeOptions.find((option) => option.value === (displayTheme ?? "system"))
+      ?.Icon || SunMedium;
   const activeLabel =
-    themeOptions.find(option => option.value === selectedTheme)?.label ??
-    themeOptions.find(option => option.value === displayTheme)?.label ??
-    'Theme';
+    themeOptions.find((option) => option.value === selectedTheme)?.label ??
+    themeOptions.find((option) => option.value === displayTheme)?.label ??
+    "Theme";
 
   if (!mounted) {
     return (
       <Button
-        variant='outline'
-        size={size === 'icon' ? 'icon' : 'sm'}
-        className={cn('border-border/70 bg-card/60 h-9 w-9 rounded-full border shadow-sm')}
-        aria-label='Toggle theme'
+        variant="outline"
+        size={size === "icon" ? "icon" : "sm"}
+        className={cn(
+          "border-border/70 bg-card/60 h-9 w-9 rounded-full border shadow-sm",
+        )}
+        aria-label="Toggle theme"
         disabled
       >
-        <ActiveIcon className='text-muted-foreground h-4 w-4' />
+        <ActiveIcon className="text-muted-foreground h-4 w-4" />
       </Button>
     );
   }
@@ -65,47 +75,49 @@ export function ThemeSwitcher({ size = 'default' }: { size?: 'default' | 'icon' 
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant='outline'
-          size={size === 'icon' ? 'icon' : 'default'}
+          variant="outline"
+          size={size === "icon" ? "icon" : "default"}
           className={cn(
-            'border-border/70 bg-card/70 hover:border-primary/50 rounded-full border shadow-sm transition',
-            size === 'icon' ? 'h-10 w-10' : 'h-10 px-4'
+            "border-border/70 bg-card/70 hover:border-primary/50 rounded-full border shadow-sm transition",
+            size === "icon" ? "h-10 w-10" : "h-10 px-4",
           )}
-          aria-label='Toggle theme'
+          aria-label="Toggle theme"
         >
-          <ActiveIcon className='text-primary h-4 w-4' />
-          {size !== 'icon' && (
-            <span className='text-muted-foreground ml-2 text-sm'>{activeLabel}</span>
+          <ActiveIcon className="text-primary h-4 w-4" />
+          {size !== "icon" && (
+            <span className="text-muted-foreground ml-2 text-sm">
+              {activeLabel}
+            </span>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align='end' className='w-40'>
+      <DropdownMenuContent align="end" className="w-40">
         <DropdownMenuLabel>Theme</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {themeOptions.map(({ value, label, Icon }) => (
           <DropdownMenuItem
             key={value}
             className={cn(
-              'flex items-center justify-between gap-2 text-sm',
-              selectedTheme === value && 'text-primary'
+              "flex items-center justify-between gap-2 text-sm",
+              selectedTheme === value && "text-primary",
             )}
             onClick={() => setTheme(value)}
           >
-            <span className='flex flex-col leading-tight'>
-              <span className='flex items-center gap-2'>
-                <Icon className='h-4 w-4' />
+            <span className="flex flex-col leading-tight">
+              <span className="flex items-center gap-2">
+                <Icon className="h-4 w-4" />
                 <span>{label}</span>
               </span>
-              {value === 'system' && (
-                <span className='text-muted-foreground text-xs'>
-                  Device: {resolvedTheme === 'dark' ? 'Dark' : 'Light'}
+              {value === "system" && (
+                <span className="text-muted-foreground text-xs">
+                  Device: {resolvedTheme === "dark" ? "Dark" : "Light"}
                 </span>
               )}
             </span>
             <Check
               className={cn(
-                'text-primary h-4 w-4 transition-opacity',
-                selectedTheme === value ? 'opacity-100' : 'opacity-0'
+                "text-primary h-4 w-4 transition-opacity",
+                selectedTheme === value ? "opacity-100" : "opacity-0",
               )}
             />
           </DropdownMenuItem>
