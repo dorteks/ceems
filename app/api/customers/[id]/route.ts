@@ -1,10 +1,22 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 import {
   deleteCustomer,
   getCustomerById,
   updateCustomer,
 } from "../../../../server/services/customerService";
+import { getSessionUser } from "../../../../server/services/userService";
+import { recordAuditEvent } from "../../../../server/services/auditService";
+
+const SESSION_COOKIE = "ceems_session";
+
+async function getCurrentUser() {
+  const cookieStore = await cookies();
+  const userId = Number(cookieStore.get(SESSION_COOKIE)?.value);
+  if (!Number.isInteger(userId)) return null;
+  return getSessionUser(userId);
+}
 
 function parseCustomerId(value: string) {
   const id = Number(value);
@@ -36,6 +48,11 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+    }
+
     const { id: rawId } = await params;
     const id = parseCustomerId(rawId);
 
@@ -55,7 +72,28 @@ export async function PUT(
       );
     }
 
+    const before = await getCustomerById(id);
     const updated = await updateCustomer(id, body);
+
+    if (before) {
+      await recordAuditEvent({
+        actorName: currentUser.name,
+        actorUsername: currentUser.username,
+        actorRole: currentUser.role,
+        action: "Updated customer",
+        entityType: "customer",
+        entityId: id,
+        entityLabel: updated.account_number,
+        beforeValue: `${before.status ?? "Unclassified"} / ${before.meter_number ?? "No meter"} / ${before.business_hub ?? "Unknown hub"}`,
+        afterValue: `${updated.status ?? "Unclassified"} / ${updated.meter_number ?? "No meter"} / ${updated.business_hub ?? "Unknown hub"}`,
+        metadata: {
+          account_number: updated.account_number,
+          hub: updated.business_hub,
+          service_center: updated.service_center,
+        },
+      });
+    }
+
     return NextResponse.json(updated, { status: 200 });
   } catch (error: unknown) {
     console.error(error);
@@ -76,6 +114,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+    }
+
     const { id: rawId } = await params;
     const id = parseCustomerId(rawId);
 
@@ -86,7 +129,26 @@ export async function DELETE(
       );
     }
 
+    const before = await getCustomerById(id);
     await deleteCustomer(id);
+
+    if (before) {
+      await recordAuditEvent({
+        actorName: currentUser.name,
+        actorUsername: currentUser.username,
+        actorRole: currentUser.role,
+        action: "Deleted customer",
+        entityType: "customer",
+        entityId: id,
+        entityLabel: before.account_number,
+        beforeValue: `${before.status ?? "Unclassified"} / ${before.meter_number ?? "No meter"} / ${before.business_hub ?? "Unknown hub"}`,
+        afterValue: "Deleted",
+        metadata: {
+          account_number: before.account_number,
+        },
+      });
+    }
+
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error: unknown) {
     console.error(error);

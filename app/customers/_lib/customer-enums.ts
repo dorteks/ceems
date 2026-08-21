@@ -6,8 +6,7 @@ import {
   PremiseType,
   ServiceCenter,
   Status,
-} from "@prisma/client";
-
+} from "@/lib/prisma-enums";
 import type { SelectOption } from "./customer-form";
 
 function formatEnumLabel(value: string) {

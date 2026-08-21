@@ -1,5 +1,5 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
-import { prisma } from "../db/prisma";
+import { prisma, type UserRow as DbUserRow } from "@/server/db/prisma";
 import {
   HUBS,
   ROLES,
@@ -9,12 +9,23 @@ import {
   type UserStatus,
 } from "@/lib/auth/types";
 import { generateTemporaryPassword } from "@/lib/auth/password";
-import {
-  Hub as PrismaHub,
-  User,
-  UserRole as PrismaUserRole,
-  UserStatus as PrismaUserStatus,
-} from "@prisma/client";
+
+type PrismaUserRole =
+  | "SUPER_ADMINISTRATOR"
+  | "DATA_MANAGER"
+  | "SUPERVISOR"
+  | "ENUMERATOR"
+  | "VIEWER";
+
+type PrismaHub = "ALL" | "OSOGBO" | "EDE" | "ILE_IFE" | "ILESA";
+
+type PrismaUserStatus = "ACTIVE" | "SUSPENDED";
+
+type UserRow = Omit<DbUserRow, "role" | "hub" | "status"> & {
+  role: PrismaUserRole;
+  hub: PrismaHub;
+  status: PrismaUserStatus;
+};
 
 export { HUBS, ROLES };
 export type { Hub, Role, UserRecord };
@@ -48,7 +59,7 @@ function toHub(hub: PrismaHub): Hub {
 }
 
 function toStatus(status: PrismaUserStatus): UserStatus {
-  return status === PrismaUserStatus.SUSPENDED ? "Suspended" : "Active";
+  return status === "SUSPENDED" ? "Suspended" : "Active";
 }
 
 function fromRole(role: Role): PrismaUserRole {
@@ -75,7 +86,7 @@ function fromHub(hub: Hub): PrismaHub {
   return map[hub];
 }
 
-function serializeUser(user: User): UserRecord {
+function serializeUser(user: UserRow): UserRecord {
   return {
     id: user.id,
     username: user.username,
@@ -213,7 +224,7 @@ export async function createUser(input: {
       phone: input.phone?.trim() || null,
       role: fromRole(input.role),
       hub: fromHub(input.hub),
-      status: PrismaUserStatus.ACTIVE,
+      status: "ACTIVE",
       password_hash: generatePasswordHash(password),
       must_change_password: true,
       created_by: input.createdBy ?? null,

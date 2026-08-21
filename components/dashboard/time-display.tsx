@@ -38,3 +38,30 @@ export function TimeDisplay() {
     </div>
   );
 }
+
+export function DayDisplay() {
+  const [now, setNow] = useState<Date | null>(null);
+
+  useEffect(() => {
+    const updateTime = () => setNow(new Date());
+
+    updateTime();
+
+    const interval = setInterval(updateTime, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  if (!now) return null;
+
+  return (
+    <div className="text-muted-foreground px-1">
+      {now.toLocaleDateString([], {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })}
+    </div>
+  );
+}

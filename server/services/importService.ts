@@ -2,7 +2,7 @@
 
 import * as XLSX from "xlsx";
 import { importCustomers } from "./customerService";
-import { prisma } from "../db/prisma";
+import { prisma } from "@/server/db/prisma";
 
 const HEADER_MAP: Record<string, string> = {
   Account_number: "account_number",
@@ -139,7 +139,7 @@ function mapCustomerRow(row: Record<string, unknown>) {
     feeder_name: cleanValue(customer.feeder_name),
     feeder_band: cleanValue(customer.feeder_band),
 
-    status: cleanValue(customer.status),
+    status: normalizeEnum(customer.status),
     business_hub: cleanValue(customer.business_hub),
     region: cleanValue(customer.region),
 
@@ -287,7 +287,10 @@ export async function parseAndImportXlsx(
       .map((c) => c.meter_number as string)
       .filter(Boolean) as string[];
 
-    const existing = await prisma.customer.findMany({
+    const existing: Array<{
+      account_number: string;
+      meter_number: string | null;
+    }> = await prisma.customer.findMany({
       where: {
         OR: [
           { account_number: { in: accounts } },
@@ -298,7 +301,9 @@ export async function parseAndImportXlsx(
     });
 
     const accSet = new Set(existing.map((e) => e.account_number));
-    const meterSet = new Set(existing.map((e) => e.meter_number));
+    const meterSet = new Set(
+      existing.map((e) => e.meter_number).filter(Boolean) as string[],
+    );
 
     const filtered: Record<string, unknown>[] = [];
 

@@ -9,6 +9,7 @@ import {
   type Hub,
   type Role,
 } from "../../../server/services/userService";
+import { recordAuditEvent } from "../../../server/services/auditService";
 
 const SESSION_COOKIE = "ceems_session";
 
@@ -85,6 +86,22 @@ export async function POST(req: Request) {
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
+
+    await recordAuditEvent({
+      actorName: user.name,
+      actorUsername: user.username,
+      actorRole: user.role,
+      action: "Created user",
+      entityType: "user",
+      entityId: result.user.id,
+      entityLabel: result.user.username,
+      beforeValue: "—",
+      afterValue: `${result.user.role} · ${result.user.hub}`,
+      metadata: {
+        status: result.user.status,
+        source: "users",
+      },
+    });
 
     return NextResponse.json(
       {
