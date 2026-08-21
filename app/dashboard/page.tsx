@@ -135,7 +135,7 @@ export default function Dashboard() {
       if (!response.ok || !json || "error" in json) {
         setError(
           json && "error" in json
-            ? json.error ?? "Failed to load dashboard"
+            ? (json.error ?? "Failed to load dashboard")
             : "Failed to load dashboard",
         );
         setData(null);
@@ -167,7 +167,12 @@ export default function Dashboard() {
         }
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={() => void loadDashboard()} disabled={loading}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void loadDashboard()}
+              disabled={loading}
+            >
               <RefreshCw className="size-4" /> Refresh
             </Button>
             <Button

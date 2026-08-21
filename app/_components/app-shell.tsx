@@ -17,7 +17,7 @@ import {
   LogOut,
   KeyRound,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -102,14 +102,44 @@ function Brand() {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [customerCount, setCustomerCount] = useState<number | null>(null);
+
   const router = useRouter();
   const { user, signOut } = useAuth();
+
   const initials = (user?.name ?? "")
     .split(" ")
     .map((n) => n[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
+
+  useEffect(() => {
+    const loadCustomerCount = async () => {
+      try {
+        const response = await fetch("/api/dashboard", {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        const totalCustomers = data?.kpis?.find(
+          (kpi: { label: string; value: string }) =>
+            kpi.label === "Total customers",
+        )?.value;
+
+        setCustomerCount(totalCustomers ? Number(totalCustomers) : null);
+      } catch {
+        // Keep the count unavailable if the request fails.
+      }
+    };
+
+    void loadCustomerCount();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -125,7 +155,11 @@ export function AppShell({ children }: { children: ReactNode }) {
               <p className="font-medium text-sidebar-accent-foreground">
                 Osun Distribution
               </p>
-              <p>214,806 records synced</p>
+              <p>
+                {customerCount === null
+                  ? "Loading records..."
+                  : `${customerCount} records synced`}
+              </p>{" "}
             </div>
           </div>
         </div>
