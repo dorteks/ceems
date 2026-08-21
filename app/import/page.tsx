@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   Check,
@@ -37,7 +37,6 @@ import {
 } from "@/components/ui/table";
 import { PageHeader } from "../_components/app-shell";
 import { StatusBadge } from "../_components/status-badge";
-import { importJobs } from "../data/ceems";
 
 // export const Route = createFileRoute("/import")({
 //   head: () => ({
@@ -68,37 +67,107 @@ const steps = [
 type ImportStage = "uploading" | "committing" | null;
 type StageStatus = "loading" | "success" | "error" | null;
 
+type ImportPreviewRow = {
+  account_number?: string;
+  surname?: string;
+  first_name?: string;
+  phone?: string;
+  [key: string]: unknown;
+};
+
+type ImportJobUploader = {
+  id: number;
+  name: string;
+  username: string;
+  role: string;
+  hub: string;
+};
+
+type ImportJobRecord = {
+  id: number;
+  fileName: string;
+  status: "VALIDATED" | "COMMITTED" | "FAILED";
+  totalRows: number;
+  validRows: number;
+  invalidRows: number;
+  duplicateRows: number;
+  importedRows: number;
+  uploadedAt: string;
+  completedAt: string | null;
+  uploadedBy: ImportJobUploader | null;
+  hasErrorReport: boolean;
+};
+
+type ImportResult = {
+  total_rows?: number;
+  preview?: ImportPreviewRow[];
+  valid_count?: number;
+  invalid_count?: number;
+  duplicates_count?: number;
+  imported?: number;
+  errors?: Array<{ row?: number; errors?: string[] }>;
+  duplicates?: unknown[];
+  message?: string;
+  jobId?: number;
+  job?: ImportJobRecord;
+};
+
+function formatImportTime(value: string) {
+  const date = new Date(value);
+  return date.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function ImportPage() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [importJobs, setImportJobs] = useState<ImportJobRecord[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(true);
+  const [jobsError, setJobsError] = useState<string | null>(null);
 
   const [stage, setStage] = useState<ImportStage>(null);
   const [stageStatus, setStageStatus] = useState<StageStatus>(null);
   const [stageMessage, setStageMessage] = useState<string | null>(null);
 
-  type ImportPreviewRow = {
-    account_number?: string;
-    surname?: string;
-    first_name?: string;
-    phone?: string;
-    [key: string]: unknown;
-  };
-
-  type ImportResult = {
-    total_rows?: number;
-    preview?: ImportPreviewRow[];
-    valid_count?: number;
-    invalid_count?: number;
-    duplicates_count?: number;
-    imported?: number;
-    errors?: Array<{ row?: number; errors?: string[] }>;
-    duplicates?: unknown[];
-    message?: string;
-  };
-
   const [result, setResult] = useState<ImportResult | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const refreshJobs = async () => {
+    try {
+      setJobsError(null);
+      setJobsLoading(true);
+      const response = await fetch("/api/import-jobs?limit=10", {
+        credentials: "include",
+      });
+
+      const data = (await response.json().catch(() => null)) as {
+        jobs?: ImportJobRecord[];
+        error?: string;
+      } | null;
+
+      if (!response.ok || !data?.jobs) {
+        setJobsError(data?.error ?? "Unable to load import history.");
+        setImportJobs([]);
+        return;
+      }
+
+      setImportJobs(data.jobs);
+    } catch {
+      setJobsError("Unable to load import history.");
+      setImportJobs([]);
+    } finally {
+      setJobsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void refreshJobs();
+  }, []);
 
   const closeStageModal = () => {
     // Guard against closing mid-request — only ever called after resolution,
@@ -148,10 +217,15 @@ export default function ImportPage() {
         setStageMessage(errMsg);
       } else {
         setResult(json);
-        const okMsg = json.message || "Preview ready";
+        const failedValidation =
+          (json?.job?.status ?? "").toUpperCase() === "FAILED";
+        const okMsg =
+          json.message ||
+          (failedValidation ? "Validation failed" : "Preview ready");
         setMessage(okMsg);
-        setStageStatus("success");
+        setStageStatus(failedValidation ? "error" : "success");
         setStageMessage(okMsg);
+        void refreshJobs();
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -190,6 +264,9 @@ export default function ImportPage() {
       const fd = new FormData();
       fd.append("file", selectedFile);
       fd.append("commit", "true");
+      if (result?.jobId) {
+        fd.append("jobId", String(result.jobId));
+      }
 
       const res = await fetch("/api/customers/import", {
         method: "POST",
@@ -206,6 +283,7 @@ export default function ImportPage() {
         setMessage("Import committed");
         setStageStatus("success");
         setStageMessage("Your import has been committed successfully.");
+        void refreshJobs();
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -217,8 +295,23 @@ export default function ImportPage() {
     }
   };
 
-  const downloadErrors = () => {
-    if (!result?.errors?.length && !result?.duplicates?.length) return;
+  const downloadErrors = async () => {
+    if (
+      !result?.errors?.length &&
+      !result?.duplicates?.length &&
+      !result?.jobId
+    ) {
+      return;
+    }
+
+    if (result?.jobId) {
+      const a = document.createElement("a");
+      a.href = `/api/import-jobs/${result.jobId}/error-report`;
+      a.download = "import-errors.csv";
+      a.click();
+      return;
+    }
+
     const rows: string[] = [];
     rows.push(["row", "type", "messages"].join(","));
 
@@ -249,6 +342,8 @@ export default function ImportPage() {
   const hasCommitted = Boolean(result && result.imported !== undefined);
 
   const currentStepIndex = hasCommitted ? 4 : hasUploadedPreview ? 3 : 0;
+  const latestFailedJob =
+    importJobs.find((job) => job.status === "FAILED") ?? null;
 
   const getStepStatus = (i: number): "complete" | "current" | "upcoming" => {
     if (hasCommitted) return "complete";
@@ -385,13 +480,26 @@ export default function ImportPage() {
                     )}
                   </div>
 
+                  {result.job?.uploadedBy && (
+                    <div className="mt-3 rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                      Uploaded by{" "}
+                      <span className="font-medium text-foreground">
+                        {result.job.uploadedBy.name}
+                      </span>{" "}
+                      ({result.job.uploadedBy.username}) on{" "}
+                      {formatImportTime(result.job.uploadedAt)}
+                    </div>
+                  )}
+
                   {result.preview && (
                     <div className="mt-4">
                       <div className="mb-2 flex items-center gap-2">
                         <Button
                           size="sm"
                           onClick={commitImport}
-                          disabled={uploading}
+                          disabled={
+                            uploading || (result.invalid_count ?? 0) > 0
+                          }
                         >
                           Commit import
                         </Button>
@@ -522,11 +630,20 @@ export default function ImportPage() {
           <CardDescription>Background processing history</CardDescription>
         </CardHeader>
         <CardContent className="px-0">
+          {jobsError ? (
+            <div className="mx-6 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-muted-foreground">
+              {jobsError}
+            </div>
+          ) : null}
+
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>File</TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    Uploaded by
+                  </TableHead>
                   <TableHead className="text-right">Rows</TableHead>
                   <TableHead className="text-right">Valid</TableHead>
                   <TableHead className="text-right">Invalid</TableHead>
@@ -535,49 +652,111 @@ export default function ImportPage() {
                   <TableHead className="hidden sm:table-cell text-right">
                     When
                   </TableHead>
+                  <TableHead className="text-right">Report</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {importJobs.map((j) => (
-                  <TableRow key={j.file}>
-                    <TableCell className="font-medium">{j.file}</TableCell>
-                    <TableCell className="text-numeric text-right">
-                      {j.rows.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-numeric text-right text-success">
-                      {j.valid.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-numeric text-right text-destructive">
-                      {j.invalid.toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <Progress
-                        value={Math.round((j.valid / j.rows) * 100)}
-                        className="h-2"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge value={j.status} />
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell text-right text-muted-foreground">
-                      {j.when}
+                {jobsLoading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={9}
+                      className="py-8 text-center text-muted-foreground"
+                    >
+                      Loading import history...
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : importJobs.length ? (
+                  importJobs.map((j) => {
+                    const quality = j.totalRows
+                      ? Math.round((j.validRows / j.totalRows) * 100)
+                      : 0;
+
+                    return (
+                      <TableRow key={j.id}>
+                        <TableCell className="font-medium">
+                          {j.fileName}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                          {j.uploadedBy ? (
+                            <div className="leading-tight">
+                              <div className="font-medium text-foreground">
+                                {j.uploadedBy.name}
+                              </div>
+                              <div>{j.uploadedBy.username}</div>
+                            </div>
+                          ) : (
+                            "System"
+                          )}
+                        </TableCell>
+                        <TableCell className="text-numeric text-right">
+                          {j.totalRows.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-numeric text-right text-success">
+                          {j.validRows.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-numeric text-right text-destructive">
+                          {j.invalidRows.toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <Progress value={quality} className="h-2" />
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge value={j.status} />
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell text-right text-muted-foreground">
+                          {formatImportTime(j.uploadedAt)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {j.hasErrorReport ? (
+                            <Button asChild size="sm" variant="ghost">
+                              <a href={`/api/import-jobs/${j.id}/error-report`}>
+                                Download
+                              </a>
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">
+                              -
+                            </span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={9}
+                      className="py-8 text-center text-muted-foreground"
+                    >
+                      No import jobs yet.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
-          <div className="mx-6 mt-4 flex items-start gap-2 rounded-md border border-warning/40 bg-warning/12 p-3 text-sm">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning-foreground" />
-            <p className="text-muted-foreground">
-              1,780 rows in{" "}
-              <span className="font-medium text-foreground">
-                ife_reconcile.xlsx
-              </span>{" "}
-              failed validation. Download the error report to correct and
-              re-upload.
-            </p>
-          </div>
+
+          {latestFailedJob ? (
+            <div className="mx-6 mt-4 flex items-start justify-between gap-3 rounded-md border border-warning/40 bg-warning/12 p-3 text-sm">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning-foreground" />
+                <p className="text-muted-foreground">
+                  {latestFailedJob.invalidRows.toLocaleString()} rows in{" "}
+                  <span className="font-medium text-foreground">
+                    {latestFailedJob.fileName}
+                  </span>{" "}
+                  failed validation. Download the error report to correct and
+                  re-upload.
+                </p>
+              </div>
+
+              <Button asChild size="sm" variant="outlineWarning">
+                <a href={`/api/import-jobs/${latestFailedJob.id}/error-report`}>
+                  Download report
+                </a>
+              </Button>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 

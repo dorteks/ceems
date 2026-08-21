@@ -1,5 +1,5 @@
 datasource db {
-  provider   = "postgresql"
+  provider = "postgresql"
 }
 
 generator client {
@@ -53,10 +53,10 @@ enum CustomerCategory {
 }
 
 enum Status {
-ACTIVE
-INACTIVE
-PENDING
-DISCONNECTED
+  ACTIVE
+  INACTIVE
+  PENDING
+  DISCONNECTED
 }
 
 enum UserRole {
@@ -80,65 +80,71 @@ enum UserStatus {
   SUSPENDED
 }
 
+enum ImportJobStatus {
+  VALIDATED
+  COMMITTED
+  FAILED
+}
+
 model Customer {
-  id                        Int              @id @default(autoincrement())
-  
+  id Int @id @default(autoincrement())
+
   // Account and meter
-  account_number            String           @unique
-  meter_number              String?          @unique
+  account_number String  @unique
+  meter_number   String? @unique
 
   // Personal information
-  surname                   String
-  first_name                String
-  other_name                String?
-  nin                       String?          @unique
+  surname    String
+  first_name String
+  other_name String?
+  nin        String? @unique
 
   // Customer classification
-  customer_type             CustomerType?
-  customer_category         CustomerCategory?
-  premise_type              PremiseType?
-  meter_type                MeterType?
-  meter_phase               MeterPhase?
+  customer_type     CustomerType?
+  customer_category CustomerCategory?
+  premise_type      PremiseType?
+  meter_type        MeterType?
+  meter_phase       MeterPhase?
 
   // Location / service
-  address                   String?
-  city                      String?
-  state                     String?
-  lga                       String?
-  service_center            ServiceCenter?
-  service_code              String?
-  tariff                    String?
-  longitude                 Float?
-  latitude                  Float?
+  address        String?
+  city           String?
+  state          String?
+  lga            String?
+  service_center ServiceCenter?
+  service_code   String?
+  tariff         String?
+  longitude      Float?
+  latitude       Float?
 
   // Contact
-  email                     String?          @unique
-  phone                     String?
+  email String? @unique
+  phone String?
 
   // Business
-  nature_of_business        String?
+  nature_of_business String?
 
   // Feeder / grid
-  dss_id                    String?
-  dss_name                  String?
-  feeder_id                 String?
-  feeder_name               String?
-  feeder_band               String?
-  status                    Status?
-  business_hub              String?
-  region                    String?
+  dss_id       String?
+  dss_name     String?
+  feeder_id    String?
+  feeder_name  String?
+  feeder_band  String?
+  status       Status?
+  business_hub String?
+  region       String?
 
   // Enumerator
-  enumerator_name           String?
-  enumerator_id             String?
-  enumerator_phone_number   String?
-  remark                    String?
+  enumerator_name         String?
+  enumerator_id           String?
+  enumerator_phone_number String?
+  remark                  String?
 
   // Audit
-  created_at                DateTime         @default(now())
-  updated_at                DateTime         @updatedAt
-  created_by                String?
-  updated_by                String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  created_by String?
+  updated_by String?
 
   @@index([meter_number])
   @@index([customer_type])
@@ -153,24 +159,49 @@ model Customer {
 }
 
 model User {
-  id                  Int        @id @default(autoincrement())
-  username            String     @unique
-  name                String
-  email               String?    @unique
-  phone               String?
-  role                UserRole
-  hub                 Hub
-  status              UserStatus @default(ACTIVE)
-  password_hash       String     @map("password_hash")
-  must_change_password Boolean    @default(true) @map("must_change_password")
-  last_login_at       DateTime?  @map("last_login_at")
-  created_at          DateTime   @default(now()) @map("created_at")
-  updated_at          DateTime   @updatedAt @map("updated_at")
-  created_by          String?    @map("created_by")
-  updated_by          String?    @map("updated_by")
+  id                   Int         @id @default(autoincrement())
+  username             String      @unique
+  name                 String
+  email                String?     @unique
+  phone                String?
+  role                 UserRole
+  hub                  Hub
+  status               UserStatus  @default(ACTIVE)
+  password_hash        String      @map("password_hash")
+  must_change_password Boolean     @default(true) @map("must_change_password")
+  last_login_at        DateTime?   @map("last_login_at")
+  created_at           DateTime    @default(now()) @map("created_at")
+  updated_at           DateTime    @updatedAt @map("updated_at")
+  created_by           String?     @map("created_by")
+  updated_by           String?     @map("updated_by")
+  importJobs           ImportJob[]
 
   @@index([role])
   @@index([hub])
   @@index([status])
   @@map("users")
+}
+
+model ImportJob {
+  id                Int             @id @default(autoincrement())
+  file_name         String
+  status            ImportJobStatus @default(VALIDATED)
+  total_rows        Int             @default(0)
+  valid_rows        Int             @default(0)
+  invalid_rows      Int             @default(0)
+  duplicate_rows    Int             @default(0)
+  imported_rows     Int             @default(0)
+  preview_rows      Json?
+  validation_errors Json?
+  duplicate_records Json?
+  uploaded_at       DateTime        @default(now())
+  completed_at      DateTime?
+  updated_at        DateTime        @updatedAt
+  uploaded_by_id    Int?
+  uploaded_by       User?           @relation(fields: [uploaded_by_id], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([uploaded_at])
+  @@index([uploaded_by_id])
+  @@map("import_jobs")
 }
