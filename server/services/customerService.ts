@@ -1,14 +1,13 @@
 import {
-  CustomerCategory,
-  CustomerType,
-  MeterPhase,
-  MeterType,
-  PremiseType,
   Prisma,
+  CustomerType,
+  CustomerCategory,
+  PremiseType,
+  MeterType,
+  MeterPhase,
   ServiceCenter,
   Status,
 } from "@prisma/client";
-
 import { prisma } from "../db/prisma";
 
 function normalizeString(value: unknown) {

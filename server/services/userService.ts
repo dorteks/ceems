@@ -10,8 +10,8 @@ import {
 } from "@/lib/auth/types";
 import { generateTemporaryPassword } from "@/lib/auth/password";
 import {
-  Hub as PrismaHub,
   User,
+  Hub as PrismaHub,
   UserRole as PrismaUserRole,
   UserStatus as PrismaUserStatus,
 } from "@prisma/client";
