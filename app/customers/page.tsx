@@ -44,14 +44,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  CustomerType,
-  CustomerCategory,
-  PremiseType,
-  MeterType,
-  MeterPhase,
-  ServiceCenter,
-  Status,
-} from "@prisma/client";
+  type CustomerTypeValue,
+  type CustomerCategoryValue,
+  type PremiseTypeValue,
+  type MeterTypeValue,
+  type MeterPhaseValue,
+  type ServiceCenterValue,
+  type StatusValue,
+} from "@/lib/prisma-enums";
 
 type CustomerTableRow = {
   id: string | number;
@@ -67,18 +67,18 @@ type CustomerTableRow = {
   nin?: string | null;
 
   // Customer classification
-  customer_type?: CustomerType | null;
-  customer_category?: CustomerCategory | null;
-  premise_type?: PremiseType | null;
-  meter_type?: MeterType | null;
-  meter_phase?: MeterPhase | null;
+  customer_type?: CustomerTypeValue | null;
+  customer_category?: CustomerCategoryValue | null;
+  premise_type?: PremiseTypeValue | null;
+  meter_type?: MeterTypeValue | null;
+  meter_phase?: MeterPhaseValue | null;
 
   // Location / service
   address?: string | null;
   city?: string | null;
   state?: string | null;
   lga?: string | null;
-  service_center?: ServiceCenter | null;
+  service_center?: ServiceCenterValue | null;
   service_code?: string | null;
   tariff?: string | null;
   longitude?: number | null;
@@ -97,7 +97,7 @@ type CustomerTableRow = {
   feeder_id?: string | null;
   feeder_name?: string | null;
   feeder_band?: string | null;
-  status?: Status | null;
+  status?: StatusValue | null;
   business_hub?: string | null;
   region?: string | null;
 
