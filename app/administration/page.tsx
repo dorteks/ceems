@@ -1,7 +1,6 @@
 "use client";
 
-import { Plus, ShieldCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ShieldCheck } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -9,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -21,10 +19,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { systemUsers } from "../data/ceems";
+import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "../_components/app-shell";
 import { StatusBadge } from "../_components/status-badge";
 import { InviteUserDialog } from "../_components/invite-user-dialog";
+import { useAuth } from "@/lib/auth/auth";
 
 // export const Route = createFileRoute("/administration")({
 //   head: () => ({
@@ -68,11 +67,26 @@ function initials(name: string) {
 }
 
 export default function AdminPage() {
+  const { accounts, user, isSuperAdmin } = useAuth();
+
+  if (!isSuperAdmin) {
+    return (
+      <PageHeader
+        title="Administration"
+        description="You do not have access to manage users and roles."
+      />
+    );
+  }
+
   return (
     <>
       <PageHeader
         title="Administration"
-        description="Users, roles and permission matrix"
+        description={
+          user
+            ? `Users, roles and permission matrix for ${user.name}`
+            : "Users, roles and permission matrix"
+        }
         actions={<InviteUserDialog />}
       />
 
@@ -91,6 +105,9 @@ export default function AdminPage() {
                     <TableRow>
                       <TableHead>User</TableHead>
                       <TableHead className="hidden md:table-cell">
+                        Username
+                      </TableHead>
+                      <TableHead className="hidden md:table-cell">
                         Email
                       </TableHead>
                       <TableHead>Role</TableHead>
@@ -98,11 +115,14 @@ export default function AdminPage() {
                         Hub
                       </TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead className="hidden md:table-cell">
+                        Password
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {systemUsers.map((u) => (
-                      <TableRow key={u.email}>
+                    {accounts.map((u) => (
+                      <TableRow key={u.username}>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <Avatar className="size-8">
@@ -112,6 +132,9 @@ export default function AdminPage() {
                             </Avatar>
                             <span className="font-medium">{u.name}</span>
                           </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-muted-foreground">
+                          {u.username}
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-muted-foreground">
                           {u.email}
@@ -132,6 +155,14 @@ export default function AdminPage() {
                             className="rounded-sm"
                             value={u.status}
                           />
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <Badge
+                            variant={u.mustChangePassword ? "destructive" : "secondary"}
+                            className="rounded-sm"
+                          >
+                            {u.mustChangePassword ? "Temporary" : "Set"}
+                          </Badge>
                         </TableCell>
                       </TableRow>
                     ))}

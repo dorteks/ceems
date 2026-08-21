@@ -33,13 +33,11 @@ import { useRouter } from "next/navigation";
 // });
 
 export default function LoginPage() {
-  const { signIn, accounts } = useAuth();
+  const { signIn } = useAuth();
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-
-  const demo = accounts[0];
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted px-4 py-10">
@@ -60,21 +58,25 @@ export default function LoginPage() {
           <CardHeader>
             <CardTitle>Sign in</CardTitle>
             <CardDescription>
-              Use your work email address and password.
+              Use your username and password.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form
               className="space-y-6"
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                const res = signIn(email, password);
+                const res = await signIn(username, password);
                 if (!res.ok) {
                   setError(res.error ?? "Unable to sign in.");
                   return;
                 }
                 setError(null);
-                router.push("/dashboard");
+                router.push(
+                  res.mustChangePassword
+                    ? "/account/change-password"
+                    : "/dashboard",
+                );
               }}
             >
               {error ? (
@@ -83,14 +85,14 @@ export default function LoginPage() {
                 </Alert>
               ) : null}
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="username">Username</Label>
                 <Input
-                  id="email"
-                  type="email"
+                  id="username"
+                  type="text"
                   autoComplete="username"
-                  placeholder="name@utility.ng"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="superadmin"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   required
                 />
               </div>
@@ -110,13 +112,11 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            {demo ? (
-              <p className="mt-6 rounded-md bg-secondary p-3 text-xs text-muted-foreground">
-                Demo access — email{" "}
-                <span className="font-mono">{demo.email}</span>, password{" "}
-                <span className="font-mono">Ceems@2026</span>
-              </p>
-            ) : null}
+            <p className="mt-6 rounded-md bg-secondary p-3 text-xs text-muted-foreground">
+              Demo access - username{" "}
+              <span className="font-mono">superadmin</span>, password{" "}
+              <span className="font-mono">Ceems@2026</span>
+            </p>
           </CardContent>
         </Card>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Copy, Plus, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,16 +23,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAuth, Role, Hub, ROLES, HUBS } from "@/lib/auth/auth";
+import { HUBS, ROLES, type Hub, type Role, useAuth } from "@/lib/auth/auth";
+import { generateTemporaryPassword } from "@/lib/auth/password";
 
 export function InviteUserDialog() {
-  const { inviteUser, defaultPassword, isSuperAdmin } = useAuth();
+  const { inviteUser, isSuperAdmin } = useAuth();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [role, setRole] = useState<Role>("Enumerator");
   const [hub, setHub] = useState<Hub>("Osogbo");
-  const [password, setPassword] = useState(defaultPassword);
+  const [password, setPassword] = useState(() => generateTemporaryPassword());
   const [error, setError] = useState<string | null>(null);
 
   if (!isSuperAdmin) return null;
@@ -48,16 +51,24 @@ export function InviteUserDialog() {
         <DialogHeader>
           <DialogTitle>Invite user</DialogTitle>
           <DialogDescription>
-            Create an account. The email address is the username, and the user
-            is prompted to change the default password after first sign-in.
+            Create an account with a username, role, and hub scope. The user is
+            prompted to change the temporary password after first sign-in.
           </DialogDescription>
         </DialogHeader>
 
         <form
           className="space-y-4"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            const res = inviteUser({ name, email, role, hub, password });
+            const res = await inviteUser({
+              name,
+              username,
+              email,
+              phone,
+              role,
+              hub,
+              password,
+            });
             if (!res.ok) {
               setError(res.error ?? "Unable to create account.");
               return;
@@ -65,9 +76,20 @@ export function InviteUserDialog() {
             setError(null);
             setOpen(false);
             setName("");
+            setUsername("");
             setEmail("");
-            setPassword(defaultPassword);
-            toast.success(`Account created for ${email}`);
+            setPhone("");
+            setPassword(generateTemporaryPassword());
+            toast.success(
+              `Account created for ${username}. Temporary password generated.`,
+            );
+            if (res.generatedPassword) {
+              navigator.clipboard
+                ?.writeText(res.generatedPassword)
+                .catch(() => {
+                  // ignore clipboard failures
+                });
+            }
           }}
         >
           {error ? (
@@ -87,14 +109,35 @@ export function InviteUserDialog() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="invite-email">Email (username)</Label>
+            <Label htmlFor="invite-username">Username</Label>
+            <Input
+              id="invite-username"
+              placeholder="supervisor.001"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="invite-email">Email</Label>
             <Input
               id="invite-email"
               type="email"
               placeholder="name@utility.ng"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="invite-phone">Phone</Label>
+            <Input
+              id="invite-phone"
+              type="tel"
+              placeholder="08030000001"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
             />
           </div>
 
@@ -102,7 +145,7 @@ export function InviteUserDialog() {
             <div className="space-y-2">
               <Label>Role</Label>
               <Select value={role} onValueChange={(v) => setRole(v as Role)}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -117,7 +160,7 @@ export function InviteUserDialog() {
             <div className="space-y-2">
               <Label>Hub scope</Label>
               <Select value={hub} onValueChange={(v) => setHub(v as Hub)}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -137,14 +180,43 @@ export function InviteUserDialog() {
           </p>
 
           <div className="space-y-2">
-            <Label htmlFor="invite-password">Default password</Label>
-            <Input
-              id="invite-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-            />
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="invite-password">Temporary password</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1 px-2 text-xs"
+                onClick={() => setPassword(generateTemporaryPassword())}
+              >
+                <RotateCcw className="size-3.5" /> Regenerate
+              </Button>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                id="invite-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() =>
+                  navigator.clipboard?.writeText(password).catch(() => {
+                    // ignore clipboard failures
+                  })
+                }
+                aria-label="Copy temporary password"
+              >
+                <Copy className="size-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              The user must change this password after first login.
+            </p>
           </div>
 
           <DialogFooter>

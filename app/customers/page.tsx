@@ -43,19 +43,75 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import {
+  CustomerCategory,
+  CustomerType,
+  MeterPhase,
+  MeterType,
+  PremiseType,
+  ServiceCenter,
+  Status,
+} from "@prisma/client";
 
 type CustomerTableRow = {
   id: string | number;
+
+  // Account and meter
   account_number: string;
   meter_number?: string | null;
+
+  // Personal information
   surname: string;
   first_name: string;
-  phone?: string | null;
+  other_name?: string | null;
   nin?: string | null;
-  tariff?: string | null;
+
+  // Customer classification
+  customer_type?: CustomerType | null;
+  customer_category?: CustomerCategory | null;
+  premise_type?: PremiseType | null;
+  meter_type?: MeterType | null;
+  meter_phase?: MeterPhase | null;
+
+  // Location / service
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
   lga?: string | null;
+  service_center?: ServiceCenter | null;
+  service_code?: string | null;
+  tariff?: string | null;
+  longitude?: number | null;
+  latitude?: number | null;
+
+  // Contact
+  email?: string | null;
+  phone?: string | null;
+
+  // Business
+  nature_of_business?: string | null;
+
+  // Feeder / grid
+  dss_id?: string | null;
+  dss_name?: string | null;
+  feeder_id?: string | null;
   feeder_name?: string | null;
-  status?: string | null;
+  feeder_band?: string | null;
+  status?: Status | null;
+  business_hub?: string | null;
+  region?: string | null;
+
+  // Enumerator
+  enumerator_name?: string | null;
+  enumerator_id?: string | null;
+  enumerator_phone_number?: string | null;
+  remark?: string | null;
+
+  // Audit
+  created_at: Date;
+  updated_at: Date;
+  created_by?: string | null;
+  updated_by?: string | null;
 };
 
 // export const Route = createFileRoute("/customers/")({
@@ -148,6 +204,8 @@ export default function CustomersPage() {
       );
     });
   }, [query, status, lga, feeder, apiCustomers, hasLoaded, loadError]);
+
+  console.log(rows, "ROWS");
 
   const reset = () => {
     setQuery("");
@@ -282,18 +340,21 @@ export default function CustomersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-10" />
-                  <TableHead>Account no.</TableHead>
                   <TableHead>Customer</TableHead>
+                  <TableHead>Account & Meter no.</TableHead>
                   <TableHead className="hidden md:table-cell">
-                    Meter no.
+                    NIN/CATEGORY
                   </TableHead>
-                  <TableHead className="hidden lg:table-cell">Tariff</TableHead>
-                  <TableHead className="hidden lg:table-cell">LGA</TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    Address
+                  </TableHead>
                   <TableHead className="hidden xl:table-cell">Feeder</TableHead>
+                  <TableHead>Enumerator</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
+                  <TableHead className="text-center">Action</TableHead>
                 </TableRow>
               </TableHeader>
+
               <TableBody>
                 {rows.map((c) => (
                   <TableRow
@@ -308,37 +369,76 @@ export default function CustomersPage() {
                         aria-label={`Select ${c.account_number}`}
                       />
                     </TableCell>
-                    <TableCell className="text-numeric font-medium">
-                      {c.account_number}
-                    </TableCell>
+
                     <TableCell>
-                      <p className="font-medium">
+                      <p className="max-w-[200px] whitespace-normal font-semibold pb-0.5">
                         {c.surname} {c.first_name}
                       </p>
-                      <p className="text-numeric text-xs text-muted-foreground">
+                      <p className="text-numeric text-sm font-medium text-muted-foreground">
                         {c.phone}
                       </p>
                     </TableCell>
+
+                    <TableCell className="text-numeric">
+                      <div className="flex flex-col items-start gap-0.5">
+                        <p className="font-medium">{c.account_number}</p>
+                        <p className="text-muted-foreground font-medium">
+                          {c.meter_number ?? "Unmetered"}
+                        </p>
+                        <p className="text-xs text-muted-foreground font-normal">
+                          {c.customer_type}
+                        </p>
+                      </div>
+                    </TableCell>
+
                     <TableCell className="text-numeric hidden md:table-cell">
-                      {c.meter_number || (
-                        <span className="text-muted-foreground">Unmetered</span>
-                      )}
+                      <div className="flex flex-col items-start">
+                        <span className="font-bold">{c.nin ?? "-"}</span>
+                        <span className="text-xs">
+                          {c.customer_category ?? "-"}
+                        </span>
+                      </div>
                     </TableCell>
+
                     <TableCell className="hidden lg:table-cell">
-                      {c.tariff}
+                      <div className="flex max-w-[220px] flex-col items-start gap-0.5">
+                        <p
+                          className="w-full truncate font-semibold"
+                          title={c.address ?? undefined}
+                        >
+                          {c.address ?? "-"}
+                        </p>
+
+                        <span className="w-full truncate text-xs text-muted-foreground">
+                          {c.city ?? "-"} · {c.state ?? "-"} · {c.lga ?? "-"}
+                        </span>
+                      </div>
                     </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      {c.lga}
-                    </TableCell>
+
                     <TableCell className="hidden xl:table-cell">
-                      {c.feeder_name}
+                      <div className="flex max-w-[160px] flex-col items-start break-words gap-1">
+                        <p className="font-semibold whitespace-normal">
+                          {c.feeder_name ?? "-"}
+                        </p>
+                        <p className="text-xs text-muted-foreground whitespace-normal">
+                          Band {c.feeder_band ?? "-"}
+                        </p>
+                      </div>
                     </TableCell>
+
                     <TableCell>
-                      <StatusBadge value={c.status} />
+                      <p className="max-w-[150px] break-words whitespace-normal font-semibold">
+                        {c.enumerator_name ?? "-"}
+                      </p>
                     </TableCell>
-                    <TableCell className="text-right">
+
+                    <TableCell>
+                      {c.status && <StatusBadge value={c.status} />}
+                    </TableCell>
+
+                    <TableCell className="max-w-fit">
                       <div
-                        className="flex justify-end gap-1"
+                        className="flex items-center justify-end gap-1 max-w-fit"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Button
@@ -381,7 +481,9 @@ export default function CustomersPage() {
       </Card>
 
       <div className="mt-4 flex flex-col items-center justify-between gap-3 text-sm text-muted-foreground sm:flex-row">
-        <p>Showing 1–{rows.length} of {totalCount} records</p>
+        <p>
+          Showing 1–{rows.length} of {totalCount} records
+        </p>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" disabled>
             Previous

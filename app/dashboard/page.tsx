@@ -224,19 +224,24 @@ export default function Dashboard() {
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader className="flex-row items-center justify-between space-y-0">
+          <CardHeader className="w-full flex flex-row items-center justify-between space-y-0">
             <div>
               <CardTitle>Active enumeration batches</CardTitle>
               <CardDescription>
                 Field capture and supervisor review
               </CardDescription>
             </div>
+
             <Button variant="ghost" size="sm">
-              <Link href="/enumeration">
+              <Link
+                className="flex flex-row items-center gap-2"
+                href="/enumeration"
+              >
                 View all <ArrowUpRight className="size-4" />
               </Link>
             </Button>
           </CardHeader>
+
           <CardContent className="px-0">
             <div className="overflow-x-auto">
               <Table>

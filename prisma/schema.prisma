@@ -59,6 +59,27 @@ PENDING
 DISCONNECTED
 }
 
+enum UserRole {
+  SUPER_ADMINISTRATOR
+  DATA_MANAGER
+  SUPERVISOR
+  ENUMERATOR
+  VIEWER
+}
+
+enum Hub {
+  ALL
+  OSOGBO
+  EDE
+  ILE_IFE
+  ILESA
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
 model Customer {
   id                        Int              @id @default(autoincrement())
   
@@ -129,4 +150,27 @@ model Customer {
   @@index([feeder_id])
   @@index([enumerator_id])
   @@index([status])
+}
+
+model User {
+  id                  Int        @id @default(autoincrement())
+  username            String     @unique
+  name                String
+  email               String?    @unique
+  phone               String?
+  role                UserRole
+  hub                 Hub
+  status              UserStatus @default(ACTIVE)
+  password_hash       String     @map("password_hash")
+  must_change_password Boolean    @default(true) @map("must_change_password")
+  last_login_at       DateTime?  @map("last_login_at")
+  created_at          DateTime   @default(now()) @map("created_at")
+  updated_at          DateTime   @updatedAt @map("updated_at")
+  created_by          String?    @map("created_by")
+  updated_by          String?    @map("updated_by")
+
+  @@index([role])
+  @@index([hub])
+  @@index([status])
+  @@map("users")
 }
