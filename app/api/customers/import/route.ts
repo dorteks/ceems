@@ -8,6 +8,7 @@ import {
   updateImportJob,
 } from "../../../../server/services/importJobService";
 import { getSessionUser } from "../../../../server/services/userService";
+import { recordAuditEvent } from "../../../../server/services/auditService";
 
 export const runtime = "nodejs";
 
@@ -124,6 +125,28 @@ export async function POST(req: Request) {
     } else {
       job = await createImportJob(jobPayload);
     }
+
+    await recordAuditEvent({
+      actorName: currentUser.name,
+      actorUsername: currentUser.username,
+      actorRole: currentUser.role,
+      action: job.status === "COMMITTED" ? "Committed import" : "Validated import",
+      entityType: "import",
+      entityId: job.id,
+      entityLabel: job.fileName,
+      beforeValue: commit ? "Validated preview" : "Upload",
+      afterValue:
+        job.status === "COMMITTED"
+          ? `${job.importedRows.toLocaleString()} rows imported`
+          : `${job.validRows.toLocaleString()} valid · ${job.invalidRows.toLocaleString()} invalid`,
+      metadata: {
+        total_rows: job.totalRows,
+        valid_rows: job.validRows,
+        invalid_rows: job.invalidRows,
+        duplicate_rows: job.duplicateRows,
+      },
+      occurredAt: now,
+    });
 
     return NextResponse.json(
       {

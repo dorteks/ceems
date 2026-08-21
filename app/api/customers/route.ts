@@ -1,8 +1,20 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import {
   listCustomers,
   createCustomer,
 } from "../../../server/services/customerService";
+import { getSessionUser } from "../../../server/services/userService";
+import { recordAuditEvent } from "../../../server/services/auditService";
+
+const SESSION_COOKIE = "ceems_session";
+
+async function getCurrentUser() {
+  const cookieStore = await cookies();
+  const userId = Number(cookieStore.get(SESSION_COOKIE)?.value);
+  if (!Number.isInteger(userId)) return null;
+  return getSessionUser(userId);
+}
 
 export async function GET(req: Request) {
   try {
@@ -23,6 +35,11 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+    }
+
     const body = (await req.json()) as Record<string, unknown>;
 
     // Basic validation
@@ -86,6 +103,22 @@ export async function POST(req: Request) {
       updated_at: body.updated_at ?? null,
       created_by: body.created_by ?? null,
       updated_by: body.updated_by ?? null,
+    });
+
+    await recordAuditEvent({
+      actorName: currentUser.name,
+      actorUsername: currentUser.username,
+      actorRole: currentUser.role,
+      action: "Created customer",
+      entityType: "customer",
+      entityId: created.id,
+      entityLabel: created.account_number,
+      beforeValue: "—",
+      afterValue: `${created.surname} ${created.first_name} · ${created.status ?? "Unclassified"}`,
+      metadata: {
+        hub: created.business_hub,
+        service_center: created.service_center,
+      },
     });
 
     return NextResponse.json(created, { status: 201 });

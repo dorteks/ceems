@@ -52,7 +52,9 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   Customer: 'Customer',
-  User: 'User'
+  User: 'User',
+  ImportJob: 'ImportJob',
+  AuditEvent: 'AuditEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -138,12 +140,59 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+export const ImportJobScalarFieldEnum = {
+  id: 'id',
+  file_name: 'file_name',
+  status: 'status',
+  total_rows: 'total_rows',
+  valid_rows: 'valid_rows',
+  invalid_rows: 'invalid_rows',
+  duplicate_rows: 'duplicate_rows',
+  imported_rows: 'imported_rows',
+  preview_rows: 'preview_rows',
+  validation_errors: 'validation_errors',
+  duplicate_records: 'duplicate_records',
+  uploaded_at: 'uploaded_at',
+  completed_at: 'completed_at',
+  updated_at: 'updated_at',
+  uploaded_by_id: 'uploaded_by_id'
+} as const
+
+export type ImportJobScalarFieldEnum = (typeof ImportJobScalarFieldEnum)[keyof typeof ImportJobScalarFieldEnum]
+
+
+export const AuditEventScalarFieldEnum = {
+  id: 'id',
+  actor_name: 'actor_name',
+  actor_username: 'actor_username',
+  actor_role: 'actor_role',
+  action: 'action',
+  entity_type: 'entity_type',
+  entity_id: 'entity_id',
+  entity_label: 'entity_label',
+  before_value: 'before_value',
+  after_value: 'after_value',
+  metadata: 'metadata',
+  occurred_at: 'occurred_at'
+} as const
+
+export type AuditEventScalarFieldEnum = (typeof AuditEventScalarFieldEnum)[keyof typeof AuditEventScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const QueryMode = {
@@ -160,4 +209,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 

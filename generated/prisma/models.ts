@@ -10,4 +10,6 @@
  */
 export type * from './models/Customer'
 export type * from './models/User'
+export type * from './models/ImportJob'
+export type * from './models/AuditEvent'
 export type * from './commonInputTypes'

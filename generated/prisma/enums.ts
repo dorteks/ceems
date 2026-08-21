@@ -110,3 +110,12 @@ export const UserStatus = {
 } as const
 
 export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus]
+
+
+export const ImportJobStatus = {
+  VALIDATED: 'VALIDATED',
+  COMMITTED: 'COMMITTED',
+  FAILED: 'FAILED'
+} as const
+
+export type ImportJobStatus = (typeof ImportJobStatus)[keyof typeof ImportJobStatus]

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -31,15 +32,9 @@ import {
 } from "@/components/ui/table";
 import { PageHeader } from "../_components/app-shell";
 import { StatusBadge } from "../_components/status-badge";
-import {
-  auditLog,
-  enumerationBatches,
-  enumerationTrend,
-  feederBandSplit,
-  kpis,
-} from "../data/ceems";
 import Link from "next/link";
 import { DayDisplay } from "@/components/dashboard/time-display";
+import { toast } from "sonner";
 
 // export const Route = createFileRoute("/")({
 //   head: () => ({
@@ -67,7 +62,99 @@ const toneClass = {
   destructive: "text-destructive",
 } as const;
 
+type DashboardKpi = {
+  label: string;
+  value: string;
+  delta: string;
+  tone: keyof typeof toneClass;
+};
+
+type DashboardTrendPoint = {
+  month: string;
+  captured: number;
+  verified: number;
+};
+
+type DashboardBandSplit = {
+  band: string;
+  customers: number;
+};
+
+type DashboardBatch = {
+  id: string;
+  hub: string;
+  enumerator: string;
+  records: number;
+  status: string;
+  progress: number;
+  updated: string;
+};
+
+type DashboardActivity = {
+  id: number;
+  actorName: string;
+  actorUsername: string | null;
+  actorRole: string | null;
+  action: string;
+  entityType: string;
+  entityId: string | null;
+  entityLabel: string;
+  beforeValue: string | null;
+  afterValue: string | null;
+  occurredAt: string;
+};
+
+type DashboardData = {
+  kpis: DashboardKpi[];
+  trend: DashboardTrendPoint[];
+  feederBandSplit: DashboardBandSplit[];
+  enumerationBatches: DashboardBatch[];
+  recentActivity: DashboardActivity[];
+  lastUpdated: string;
+};
+
 export default function Dashboard() {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadDashboard = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch("/api/dashboard", {
+        credentials: "include",
+      });
+
+      const json = (await response.json().catch(() => null)) as
+        | DashboardData
+        | { error?: string }
+        | null;
+
+      if (!response.ok || !json || "error" in json) {
+        setError(
+          json && "error" in json
+            ? json.error ?? "Failed to load dashboard"
+            : "Failed to load dashboard",
+        );
+        setData(null);
+        return;
+      }
+
+      setData(json as DashboardData);
+    } catch {
+      setError("Failed to load dashboard");
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadDashboard();
+  }, []);
+
   return (
     <>
       <PageHeader
@@ -80,18 +167,33 @@ export default function Dashboard() {
         }
         actions={
           <>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => void loadDashboard()} disabled={loading}>
               <RefreshCw className="size-4" /> Refresh
             </Button>
-            <Button size="sm">
+            <Button
+              onClick={() =>
+                toast.message("Coming soon", {
+                  position: "top-right",
+                })
+              }
+              size="sm"
+            >
               <Download className="size-4" /> Export snapshot
             </Button>
           </>
         }
       />
 
+      {error ? (
+        <Card className="mb-4 border-destructive/30 bg-destructive/5">
+          <CardContent className="py-4 text-sm text-muted-foreground">
+            {error}
+          </CardContent>
+        </Card>
+      ) : null}
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {kpis.map((kpi) => (
+        {(data?.kpis ?? []).map((kpi) => (
           <Card key={kpi.label}>
             <CardHeader className="pb-2">
               <CardDescription>{kpi.label}</CardDescription>
@@ -117,66 +219,72 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={enumerationTrend}
-                margin={{ left: -18, right: 8, top: 8 }}
-              >
-                <defs>
-                  <linearGradient id="cap" x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="0%"
-                      stopColor="var(--color-primary)"
-                      stopOpacity={0.35}
-                    />
-                    <stop
-                      offset="100%"
-                      stopColor="var(--color-primary)"
-                      stopOpacity={0}
-                    />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="var(--color-border)"
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="month"
-                  stroke="var(--color-muted-foreground)"
-                  fontSize={12}
-                  tickLine={false}
-                />
-                <YAxis
-                  stroke="var(--color-muted-foreground)"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: "var(--color-card)",
-                    border: "1px solid var(--color-border)",
-                    borderRadius: "var(--radius-md)",
-                    fontSize: 12,
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="captured"
-                  stroke="var(--color-primary)"
-                  fill="url(#cap)"
-                  strokeWidth={2}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="verified"
-                  stroke="var(--color-accent)"
-                  fill="transparent"
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {loading && !data ? (
+              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                Loading chart...
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={data?.trend ?? []}
+                  margin={{ left: -18, right: 8, top: 8 }}
+                >
+                  <defs>
+                    <linearGradient id="cap" x1="0" y1="0" x2="0" y2="1">
+                      <stop
+                        offset="0%"
+                        stopColor="var(--color-primary)"
+                        stopOpacity={0.35}
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor="var(--color-primary)"
+                        stopOpacity={0}
+                      />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="var(--color-border)"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="month"
+                    stroke="var(--color-muted-foreground)"
+                    fontSize={12}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    stroke="var(--color-muted-foreground)"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: "var(--color-card)",
+                      border: "1px solid var(--color-border)",
+                      borderRadius: "var(--radius-md)",
+                      fontSize: 12,
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="captured"
+                    stroke="var(--color-primary)"
+                    fill="url(#cap)"
+                    strokeWidth={2}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="verified"
+                    stroke="var(--color-accent)"
+                    fill="transparent"
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
@@ -186,44 +294,50 @@ export default function Dashboard() {
             <CardDescription>Distribution across tariff bands</CardDescription>
           </CardHeader>
           <CardContent className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={feederBandSplit}
-                margin={{ left: -18, right: 8, top: 8 }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="var(--color-border)"
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="band"
-                  stroke="var(--color-muted-foreground)"
-                  fontSize={11}
-                  tickLine={false}
-                />
-                <YAxis
-                  stroke="var(--color-muted-foreground)"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip
-                  cursor={{ fill: "var(--color-muted)" }}
-                  contentStyle={{
-                    background: "var(--color-card)",
-                    border: "1px solid var(--color-border)",
-                    borderRadius: "var(--radius-md)",
-                    fontSize: 12,
-                  }}
-                />
-                <Bar
-                  dataKey="customers"
-                  fill="var(--color-primary)"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            {loading && !data ? (
+              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                Loading chart...
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={data?.feederBandSplit ?? []}
+                  margin={{ left: -18, right: 8, top: 8 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="var(--color-border)"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="band"
+                    stroke="var(--color-muted-foreground)"
+                    fontSize={11}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    stroke="var(--color-muted-foreground)"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip
+                    cursor={{ fill: "var(--color-muted)" }}
+                    contentStyle={{
+                      background: "var(--color-card)",
+                      border: "1px solid var(--color-border)",
+                      borderRadius: "var(--radius-md)",
+                      fontSize: 12,
+                    }}
+                  />
+                  <Bar
+                    dataKey="customers"
+                    fill="var(--color-primary)"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -264,7 +378,7 @@ export default function Dashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {enumerationBatches.map((b) => (
+                  {(data?.enumerationBatches ?? []).map((b) => (
                     <TableRow key={b.id}>
                       <TableCell className="text-numeric font-medium">
                         {b.id}
@@ -296,7 +410,7 @@ export default function Dashboard() {
             <CardDescription>Audit trail highlights</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {auditLog.slice(0, 5).map((entry, i) => (
+            {(data?.recentActivity ?? []).map((entry, i) => (
               <div
                 key={i}
                 className="flex gap-3 border-b border-border pb-3 last:border-0 last:pb-0"
@@ -304,17 +418,28 @@ export default function Dashboard() {
                 <span className="mt-1 size-2 shrink-0 rounded-full bg-accent" />
                 <div className="text-sm">
                   <p className="font-medium">
-                    {entry.actor} ·{" "}
+                    {entry.actorName} ·{" "}
                     <span className="font-normal text-muted-foreground">
                       {entry.action}
                     </span>
                   </p>
                   <p className="text-numeric text-xs text-muted-foreground">
-                    {entry.entity} — {entry.when}
+                    {entry.entityLabel} —{" "}
+                    {new Date(entry.occurredAt).toLocaleString([], {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </p>
                 </div>
               </div>
             ))}
+            {!(data?.recentActivity?.length ?? 0) && !loading ? (
+              <p className="text-sm text-muted-foreground">
+                No recent activity yet.
+              </p>
+            ) : null}
           </CardContent>
         </Card>
       </div>

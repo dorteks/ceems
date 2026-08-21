@@ -51,3 +51,13 @@ export type Customer = Prisma.CustomerModel
  * 
  */
 export type User = Prisma.UserModel
+/**
+ * Model ImportJob
+ * 
+ */
+export type ImportJob = Prisma.ImportJobModel
+/**
+ * Model AuditEvent
+ * 
+ */
+export type AuditEvent = Prisma.AuditEventModel
