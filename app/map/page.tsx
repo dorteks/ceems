@@ -1,6 +1,6 @@
 "use client";
 
-import { Layers, MapPin } from "lucide-react";
+import { Construction, Layers, MapPin } from "lucide-react";
 
 import {
   Card,
@@ -42,6 +42,19 @@ export default function MapPage() {
 
   return (
     <>
+      <div className="flex items-center gap-4 rounded-lg mb-6 border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/50">
+          <Construction className="size-6 text-amber-600 dark:text-amber-400" />
+        </div>
+
+        <div>
+          <h3 className="font-semibold">Under Construction</h3>
+          <p className="text-sm text-amber-700 dark:text-amber-300">
+            This section is currently being built. Please check back soon.
+          </p>
+        </div>
+      </div>
+
       <PageHeader
         title="Coverage map"
         description="Enumerated customer locations across the Osun network"

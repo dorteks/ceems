@@ -12,6 +12,9 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  icons: {
+    icon: "/ceems.svg",
+  },
   title: "CEEMS — Customer & Electricity Enumeration Management",
   description:
     "Centralized platform for managing electricity customers, meters, network assets and field enumeration at scale.",
