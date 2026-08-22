@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import {
   Area,
   AreaChart,
-  Bar,
-  BarChart,
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
@@ -35,6 +33,7 @@ import { StatusBadge } from "../_components/status-badge";
 import Link from "next/link";
 import { DayDisplay } from "@/components/dashboard/time-display";
 import { toast } from "sonner";
+import { Donut } from "@/components/dashboard/donut";
 
 // export const Route = createFileRoute("/")({
 //   head: () => ({
@@ -154,6 +153,19 @@ export default function Dashboard() {
   useEffect(() => {
     void loadDashboard();
   }, []);
+
+  const feederBandSegments =
+    data?.feederBandSplit?.map((item, index) => ({
+      label: item.band,
+      value: item.customers,
+      color: [
+        "var(--color-primary)",
+        "var(--color-success)",
+        "var(--color-warning)",
+        "var(--color-info)",
+        "var(--color-destructive)",
+      ][index % 5],
+    })) ?? [];
 
   return (
     <>
@@ -293,55 +305,53 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Customers by feeder band</CardTitle>
+        <Card className="min-w-0 overflow-hidden">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">
+              Customers by feeder band
+            </CardTitle>
             <CardDescription>Distribution across tariff bands</CardDescription>
           </CardHeader>
-          <CardContent className="h-72">
+
+          <CardContent className="flex min-w-0 flex-col items-center gap-4 sm:flex-row sm:gap-6">
             {loading && !data ? (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              <div className="flex h-40 w-full items-center justify-center text-sm text-muted-foreground">
                 Loading chart...
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={data?.feederBandSplit ?? []}
-                  margin={{ left: -18, right: 8, top: 8 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="var(--color-border)"
-                    vertical={false}
+              <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-center gap-6 2xl:gap-12 lg:items-center">
+                <div className="shrink-0">
+                  <Donut
+                    segments={feederBandSegments}
+                    centerTop={feederBandSegments
+                      .reduce((total, segment) => total + segment.value, 0)
+                      .toLocaleString()}
+                    centerBottom="Total Customers"
                   />
-                  <XAxis
-                    dataKey="band"
-                    stroke="var(--color-muted-foreground)"
-                    fontSize={11}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    stroke="var(--color-muted-foreground)"
-                    fontSize={11}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <Tooltip
-                    cursor={{ fill: "var(--color-muted)" }}
-                    contentStyle={{
-                      background: "var(--color-card)",
-                      border: "1px solid var(--color-border)",
-                      borderRadius: "var(--radius-md)",
-                      fontSize: 12,
-                    }}
-                  />
-                  <Bar
-                    dataKey="customers"
-                    fill="var(--color-primary)"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+                </div>
+
+                <div className="min-w-0 max-w-fit space-y-1.5 text-sm">
+                  {feederBandSegments.map((segment) => (
+                    <div
+                      key={segment.label}
+                      className="flex min-w-0 items-center gap-2"
+                    >
+                      <span
+                        className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                        style={{ background: segment.color }}
+                      />
+
+                      <span className="min-w-0 mr-2 truncate text-foreground">
+                        {segment.label}
+                      </span>
+
+                      <span className="ml-auto shrink-0 tabular-nums text-muted-foreground">
+                        {segment.value.toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>

@@ -205,8 +205,6 @@ export default function CustomersPage() {
     });
   }, [query, status, lga, feeder, apiCustomers, hasLoaded, loadError]);
 
-  console.log(rows, "ROWS");
-
   const reset = () => {
     setQuery("");
     setStatus("All statuses");

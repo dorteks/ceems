@@ -107,7 +107,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           credentials: "include",
           body: JSON.stringify({ identifier, password }),
         });
-        console.log(response, "RESP");
 
         const data = (await response.json().catch(() => null)) as {
           user?: UserRecord;

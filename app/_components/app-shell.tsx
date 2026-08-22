@@ -82,6 +82,15 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+{
+  /* <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="36" height="36" role="img" aria-label="CEEMS logo">
+  <rect width="36" height="36" rx="6" fill="oklch(0.79 0.16 76)" />
+  <svg x="8" y="8" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="oklch(0.24 0.05 60)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" />
+  </svg>
+</svg> */
+}
+
 function Brand() {
   return (
     <div className="flex items-center gap-3 border-b border-sidebar-border px-4 py-[13.5px]">
@@ -158,14 +167,14 @@ export function AppShell({ children }: { children: ReactNode }) {
               <p>
                 {customerCount === null
                   ? "Loading records..."
-                  : `${customerCount} records synced`}
-              </p>{" "}
+                  : `All hubs · ${customerCount} records synced`}
+              </p>
             </div>
           </div>
         </div>
       </aside>
 
-      <div className="lg:pl-64">
+      <div className="min-h-screen lg:pl-64">
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-card/90 px-4 backdrop-blur md:px-6">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger>
@@ -231,10 +240,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
                 <DropdownMenuSeparator />
 
-                <DropdownMenuItem
-                  onSelect={() => router.push("/account/change-password")}
-                >
-                  <KeyRound className="size-4" /> Change password
+                <DropdownMenuItem onSelect={() => router.push("/account")}>
+                  <KeyRound className="size-4" />
+                  My Account
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
@@ -250,7 +258,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="p-4 md:p-6 bg-muted/40">{children}</main>
+        <main className="min-h-[calc(100vh-4rem)] bg-muted/40 p-4 md:p-6">
+          {children}
+        </main>
       </div>
     </div>
   );
