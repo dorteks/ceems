@@ -6,8 +6,11 @@ import {
   getCustomerById,
   updateCustomer,
 } from "../../../../server/services/customerService";
+import { prisma } from "../../../../server/db/prisma";
 import { getSessionUser } from "../../../../server/services/userService";
 import { recordAuditEvent } from "../../../../server/services/auditService";
+import { recordAuditEventWithClient } from "../../../../server/services/auditService";
+import { recordCustomerEnumeration } from "../../../../server/services/enumerationService";
 
 const SESSION_COOKIE = "ceems_session";
 
@@ -75,36 +78,54 @@ export async function PUT(
       );
     }
 
-    const before = await getCustomerById(id);
+    const updated = await prisma.$transaction(async (tx) => {
+      const before = await tx.customer.findUnique({
+        where: { id },
+      });
 
-    if (!before) {
+      if (!before) {
+        return null;
+      }
+
+      const next = await updateCustomer(id, body, currentUser.name, tx);
+
+      await recordCustomerEnumeration(tx, {
+        customerId: id,
+        userId: currentUser.id,
+        userName: currentUser.name,
+        serviceCenter: next.service_center ?? before.service_center,
+        beforeData: before,
+        afterData: next,
+        enumeratedAt: next.updated_at,
+      });
+
+      await recordAuditEventWithClient(tx, {
+        actorName: currentUser.name,
+        actorUsername: currentUser.username,
+        actorRole: currentUser.role,
+        action: "Updated customer",
+        entityType: "customer",
+        entityId: id,
+        entityLabel: next.account_number,
+        beforeValue: `${before.status ?? "Unclassified"} / ${before.meter_number ?? "No meter"} / ${before.business_hub ?? "Unknown hub"}`,
+        afterValue: `${next.status ?? "Unclassified"} / ${next.meter_number ?? "No meter"} / ${next.business_hub ?? "Unknown hub"}`,
+        metadata: {
+          account_number: next.account_number,
+          hub: next.business_hub,
+          service_center: next.service_center,
+          updated_by: currentUser.name,
+        },
+      });
+
+      return next;
+    });
+
+    if (!updated) {
       return NextResponse.json(
         { error: "Customer not found" },
         { status: 404 },
       );
     }
-
-    // The server supplies the current user's name.
-    // The client cannot control updated_by.
-    const updated = await updateCustomer(id, body, currentUser.name);
-
-    await recordAuditEvent({
-      actorName: currentUser.name,
-      actorUsername: currentUser.username,
-      actorRole: currentUser.role,
-      action: "Updated customer",
-      entityType: "customer",
-      entityId: id,
-      entityLabel: updated.account_number,
-      beforeValue: `${before.status ?? "Unclassified"} / ${before.meter_number ?? "No meter"} / ${before.business_hub ?? "Unknown hub"}`,
-      afterValue: `${updated.status ?? "Unclassified"} / ${updated.meter_number ?? "No meter"} / ${updated.business_hub ?? "Unknown hub"}`,
-      metadata: {
-        account_number: updated.account_number,
-        hub: updated.business_hub,
-        service_center: updated.service_center,
-        updated_by: currentUser.name,
-      },
-    });
 
     return NextResponse.json(updated, { status: 200 });
   } catch (error: unknown) {

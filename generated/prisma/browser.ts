@@ -28,6 +28,11 @@ export type Customer = Prisma.CustomerModel
  */
 export type User = Prisma.UserModel
 /**
+ * Model CustomerEnumeration
+ * 
+ */
+export type CustomerEnumeration = Prisma.CustomerEnumerationModel
+/**
  * Model ImportJob
  * 
  */

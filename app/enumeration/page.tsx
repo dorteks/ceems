@@ -258,3 +258,10 @@ export default function EnumerationPage() {
     </>
   );
 }
+
+// NOTE: enumeration means updating or editing customers' data
+// - enumeration page should::
+// - show a comprehensive data of enumerated customers updated by different users - exportable data.
+// - show/get enumerated customers for the a selected day, a selected month, or a selected time range - exportable data
+// - show/get enumerated by service centers (eg ayepe-1), and should also be able to filter by specific day, by specific month, or a selected time range  - exportable data
+// - see or keep track of update/enumeration trail for customers - (eg updated by user1 on date1, updated by user1 on date2, updatedby user2 on date3)

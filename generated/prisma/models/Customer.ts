@@ -504,6 +504,7 @@ export type CustomerWhereInput = {
   updated_at?: Prisma.DateTimeFilter<"Customer"> | Date | string
   created_by?: Prisma.StringNullableFilter<"Customer"> | string | null
   updated_by?: Prisma.StringNullableFilter<"Customer"> | string | null
+  enumerations?: Prisma.CustomerEnumerationListRelationFilter
 }
 
 export type CustomerOrderByWithRelationInput = {
@@ -547,6 +548,7 @@ export type CustomerOrderByWithRelationInput = {
   updated_at?: Prisma.SortOrder
   created_by?: Prisma.SortOrderInput | Prisma.SortOrder
   updated_by?: Prisma.SortOrderInput | Prisma.SortOrder
+  enumerations?: Prisma.CustomerEnumerationOrderByRelationAggregateInput
 }
 
 export type CustomerWhereUniqueInput = Prisma.AtLeast<{
@@ -593,6 +595,7 @@ export type CustomerWhereUniqueInput = Prisma.AtLeast<{
   updated_at?: Prisma.DateTimeFilter<"Customer"> | Date | string
   created_by?: Prisma.StringNullableFilter<"Customer"> | string | null
   updated_by?: Prisma.StringNullableFilter<"Customer"> | string | null
+  enumerations?: Prisma.CustomerEnumerationListRelationFilter
 }, "id" | "account_number" | "meter_number" | "nin" | "email">
 
 export type CustomerOrderByWithAggregationInput = {
@@ -729,6 +732,7 @@ export type CustomerCreateInput = {
   updated_at?: Date | string
   created_by?: string | null
   updated_by?: string | null
+  enumerations?: Prisma.CustomerEnumerationCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateInput = {
@@ -772,6 +776,7 @@ export type CustomerUncheckedCreateInput = {
   updated_at?: Date | string
   created_by?: string | null
   updated_by?: string | null
+  enumerations?: Prisma.CustomerEnumerationUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUpdateInput = {
@@ -814,6 +819,7 @@ export type CustomerUpdateInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enumerations?: Prisma.CustomerEnumerationUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateInput = {
@@ -857,6 +863,7 @@ export type CustomerUncheckedUpdateInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enumerations?: Prisma.CustomerEnumerationUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateManyInput = {
@@ -1128,6 +1135,11 @@ export type CustomerSumOrderByAggregateInput = {
   latitude?: Prisma.SortOrder
 }
 
+export type CustomerScalarRelationFilter = {
+  is?: Prisma.CustomerWhereInput
+  isNot?: Prisma.CustomerWhereInput
+}
+
 export type StringFieldUpdateOperationsInput = {
   set?: string
 }
@@ -1184,6 +1196,235 @@ export type IntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type CustomerCreateNestedOneWithoutEnumerationsInput = {
+  create?: Prisma.XOR<Prisma.CustomerCreateWithoutEnumerationsInput, Prisma.CustomerUncheckedCreateWithoutEnumerationsInput>
+  connectOrCreate?: Prisma.CustomerCreateOrConnectWithoutEnumerationsInput
+  connect?: Prisma.CustomerWhereUniqueInput
+}
+
+export type CustomerUpdateOneRequiredWithoutEnumerationsNestedInput = {
+  create?: Prisma.XOR<Prisma.CustomerCreateWithoutEnumerationsInput, Prisma.CustomerUncheckedCreateWithoutEnumerationsInput>
+  connectOrCreate?: Prisma.CustomerCreateOrConnectWithoutEnumerationsInput
+  upsert?: Prisma.CustomerUpsertWithoutEnumerationsInput
+  connect?: Prisma.CustomerWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CustomerUpdateToOneWithWhereWithoutEnumerationsInput, Prisma.CustomerUpdateWithoutEnumerationsInput>, Prisma.CustomerUncheckedUpdateWithoutEnumerationsInput>
+}
+
+export type CustomerCreateWithoutEnumerationsInput = {
+  account_number: string
+  meter_number?: string | null
+  surname: string
+  first_name: string
+  other_name?: string | null
+  nin?: string | null
+  customer_type?: $Enums.CustomerType | null
+  customer_category?: $Enums.CustomerCategory | null
+  premise_type?: $Enums.PremiseType | null
+  meter_type?: $Enums.MeterType | null
+  meter_phase?: $Enums.MeterPhase | null
+  address?: string | null
+  city?: string | null
+  state?: string | null
+  lga?: string | null
+  service_center?: $Enums.ServiceCenter | null
+  service_code?: string | null
+  tariff?: string | null
+  longitude?: number | null
+  latitude?: number | null
+  email?: string | null
+  phone?: string | null
+  nature_of_business?: string | null
+  dss_id?: string | null
+  dss_name?: string | null
+  feeder_id?: string | null
+  feeder_name?: string | null
+  feeder_band?: string | null
+  status?: $Enums.Status | null
+  business_hub?: string | null
+  region?: string | null
+  enumerator_name?: string | null
+  enumerator_id?: string | null
+  enumerator_phone_number?: string | null
+  remark?: string | null
+  created_at?: Date | string
+  updated_at?: Date | string
+  created_by?: string | null
+  updated_by?: string | null
+}
+
+export type CustomerUncheckedCreateWithoutEnumerationsInput = {
+  id?: number
+  account_number: string
+  meter_number?: string | null
+  surname: string
+  first_name: string
+  other_name?: string | null
+  nin?: string | null
+  customer_type?: $Enums.CustomerType | null
+  customer_category?: $Enums.CustomerCategory | null
+  premise_type?: $Enums.PremiseType | null
+  meter_type?: $Enums.MeterType | null
+  meter_phase?: $Enums.MeterPhase | null
+  address?: string | null
+  city?: string | null
+  state?: string | null
+  lga?: string | null
+  service_center?: $Enums.ServiceCenter | null
+  service_code?: string | null
+  tariff?: string | null
+  longitude?: number | null
+  latitude?: number | null
+  email?: string | null
+  phone?: string | null
+  nature_of_business?: string | null
+  dss_id?: string | null
+  dss_name?: string | null
+  feeder_id?: string | null
+  feeder_name?: string | null
+  feeder_band?: string | null
+  status?: $Enums.Status | null
+  business_hub?: string | null
+  region?: string | null
+  enumerator_name?: string | null
+  enumerator_id?: string | null
+  enumerator_phone_number?: string | null
+  remark?: string | null
+  created_at?: Date | string
+  updated_at?: Date | string
+  created_by?: string | null
+  updated_by?: string | null
+}
+
+export type CustomerCreateOrConnectWithoutEnumerationsInput = {
+  where: Prisma.CustomerWhereUniqueInput
+  create: Prisma.XOR<Prisma.CustomerCreateWithoutEnumerationsInput, Prisma.CustomerUncheckedCreateWithoutEnumerationsInput>
+}
+
+export type CustomerUpsertWithoutEnumerationsInput = {
+  update: Prisma.XOR<Prisma.CustomerUpdateWithoutEnumerationsInput, Prisma.CustomerUncheckedUpdateWithoutEnumerationsInput>
+  create: Prisma.XOR<Prisma.CustomerCreateWithoutEnumerationsInput, Prisma.CustomerUncheckedCreateWithoutEnumerationsInput>
+  where?: Prisma.CustomerWhereInput
+}
+
+export type CustomerUpdateToOneWithWhereWithoutEnumerationsInput = {
+  where?: Prisma.CustomerWhereInput
+  data: Prisma.XOR<Prisma.CustomerUpdateWithoutEnumerationsInput, Prisma.CustomerUncheckedUpdateWithoutEnumerationsInput>
+}
+
+export type CustomerUpdateWithoutEnumerationsInput = {
+  account_number?: Prisma.StringFieldUpdateOperationsInput | string
+  meter_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  surname?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.StringFieldUpdateOperationsInput | string
+  other_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customer_type?: Prisma.NullableEnumCustomerTypeFieldUpdateOperationsInput | $Enums.CustomerType | null
+  customer_category?: Prisma.NullableEnumCustomerCategoryFieldUpdateOperationsInput | $Enums.CustomerCategory | null
+  premise_type?: Prisma.NullableEnumPremiseTypeFieldUpdateOperationsInput | $Enums.PremiseType | null
+  meter_type?: Prisma.NullableEnumMeterTypeFieldUpdateOperationsInput | $Enums.MeterType | null
+  meter_phase?: Prisma.NullableEnumMeterPhaseFieldUpdateOperationsInput | $Enums.MeterPhase | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lga?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service_center?: Prisma.NullableEnumServiceCenterFieldUpdateOperationsInput | $Enums.ServiceCenter | null
+  service_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tariff?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nature_of_business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dss_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dss_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  feeder_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  feeder_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  feeder_band?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.NullableEnumStatusFieldUpdateOperationsInput | $Enums.Status | null
+  business_hub?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  region?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enumerator_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enumerator_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enumerator_phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
+export type CustomerUncheckedUpdateWithoutEnumerationsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  account_number?: Prisma.StringFieldUpdateOperationsInput | string
+  meter_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  surname?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.StringFieldUpdateOperationsInput | string
+  other_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customer_type?: Prisma.NullableEnumCustomerTypeFieldUpdateOperationsInput | $Enums.CustomerType | null
+  customer_category?: Prisma.NullableEnumCustomerCategoryFieldUpdateOperationsInput | $Enums.CustomerCategory | null
+  premise_type?: Prisma.NullableEnumPremiseTypeFieldUpdateOperationsInput | $Enums.PremiseType | null
+  meter_type?: Prisma.NullableEnumMeterTypeFieldUpdateOperationsInput | $Enums.MeterType | null
+  meter_phase?: Prisma.NullableEnumMeterPhaseFieldUpdateOperationsInput | $Enums.MeterPhase | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lga?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  service_center?: Prisma.NullableEnumServiceCenterFieldUpdateOperationsInput | $Enums.ServiceCenter | null
+  service_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tariff?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nature_of_business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dss_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dss_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  feeder_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  feeder_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  feeder_band?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.NullableEnumStatusFieldUpdateOperationsInput | $Enums.Status | null
+  business_hub?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  region?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enumerator_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enumerator_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enumerator_phone_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
+
+/**
+ * Count Type CustomerCountOutputType
+ */
+
+export type CustomerCountOutputType = {
+  enumerations: number
+}
+
+export type CustomerCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  enumerations?: boolean | CustomerCountOutputTypeCountEnumerationsArgs
+}
+
+/**
+ * CustomerCountOutputType without action
+ */
+export type CustomerCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CustomerCountOutputType
+   */
+  select?: Prisma.CustomerCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * CustomerCountOutputType without action
+ */
+export type CustomerCountOutputTypeCountEnumerationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CustomerEnumerationWhereInput
+}
 
 
 export type CustomerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1227,6 +1468,8 @@ export type CustomerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   updated_at?: boolean
   created_by?: boolean
   updated_by?: boolean
+  enumerations?: boolean | Prisma.Customer$enumerationsArgs<ExtArgs>
+  _count?: boolean | Prisma.CustomerCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["customer"]>
 
 export type CustomerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1359,10 +1602,18 @@ export type CustomerSelectScalar = {
 }
 
 export type CustomerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "account_number" | "meter_number" | "surname" | "first_name" | "other_name" | "nin" | "customer_type" | "customer_category" | "premise_type" | "meter_type" | "meter_phase" | "address" | "city" | "state" | "lga" | "service_center" | "service_code" | "tariff" | "longitude" | "latitude" | "email" | "phone" | "nature_of_business" | "dss_id" | "dss_name" | "feeder_id" | "feeder_name" | "feeder_band" | "status" | "business_hub" | "region" | "enumerator_name" | "enumerator_id" | "enumerator_phone_number" | "remark" | "created_at" | "updated_at" | "created_by" | "updated_by", ExtArgs["result"]["customer"]>
+export type CustomerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  enumerations?: boolean | Prisma.Customer$enumerationsArgs<ExtArgs>
+  _count?: boolean | Prisma.CustomerCountOutputTypeDefaultArgs<ExtArgs>
+}
+export type CustomerIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type CustomerIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
 
 export type $CustomerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Customer"
-  objects: {}
+  objects: {
+    enumerations: Prisma.$CustomerEnumerationPayload<ExtArgs>[]
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     account_number: string
@@ -1798,6 +2049,7 @@ readonly fields: CustomerFieldRefs;
  */
 export interface Prisma__CustomerClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  enumerations<T extends Prisma.Customer$enumerationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$enumerationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CustomerEnumerationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1884,6 +2136,10 @@ export type CustomerFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Inte
    */
   omit?: Prisma.CustomerOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CustomerInclude<ExtArgs> | null
+  /**
    * Filter, which Customer to fetch.
    */
   where: Prisma.CustomerWhereUniqueInput
@@ -1902,6 +2158,10 @@ export type CustomerFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extensio
    */
   omit?: Prisma.CustomerOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CustomerInclude<ExtArgs> | null
+  /**
    * Filter, which Customer to fetch.
    */
   where: Prisma.CustomerWhereUniqueInput
@@ -1919,6 +2179,10 @@ export type CustomerFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Omit specific fields from the Customer
    */
   omit?: Prisma.CustomerOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CustomerInclude<ExtArgs> | null
   /**
    * Filter, which Customer to fetch.
    */
@@ -1968,6 +2232,10 @@ export type CustomerFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extension
    */
   omit?: Prisma.CustomerOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CustomerInclude<ExtArgs> | null
+  /**
    * Filter, which Customer to fetch.
    */
   where?: Prisma.CustomerWhereInput
@@ -2015,6 +2283,10 @@ export type CustomerFindManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Omit specific fields from the Customer
    */
   omit?: Prisma.CustomerOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CustomerInclude<ExtArgs> | null
   /**
    * Filter, which Customers to fetch.
    */
@@ -2064,6 +2336,10 @@ export type CustomerCreateArgs<ExtArgs extends runtime.Types.Extensions.Internal
    */
   omit?: Prisma.CustomerOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CustomerInclude<ExtArgs> | null
+  /**
    * The data needed to create a Customer.
    */
   data: Prisma.XOR<Prisma.CustomerCreateInput, Prisma.CustomerUncheckedCreateInput>
@@ -2111,6 +2387,10 @@ export type CustomerUpdateArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Omit specific fields from the Customer
    */
   omit?: Prisma.CustomerOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CustomerInclude<ExtArgs> | null
   /**
    * The data needed to update a Customer.
    */
@@ -2178,6 +2458,10 @@ export type CustomerUpsertArgs<ExtArgs extends runtime.Types.Extensions.Internal
    */
   omit?: Prisma.CustomerOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CustomerInclude<ExtArgs> | null
+  /**
    * The filter to search for the Customer to update in case it exists.
    */
   where: Prisma.CustomerWhereUniqueInput
@@ -2204,6 +2488,10 @@ export type CustomerDeleteArgs<ExtArgs extends runtime.Types.Extensions.Internal
    */
   omit?: Prisma.CustomerOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CustomerInclude<ExtArgs> | null
+  /**
    * Filter which Customer to delete.
    */
   where: Prisma.CustomerWhereUniqueInput
@@ -2224,6 +2512,30 @@ export type CustomerDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
 }
 
 /**
+ * Customer.enumerations
+ */
+export type Customer$enumerationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CustomerEnumeration
+   */
+  select?: Prisma.CustomerEnumerationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CustomerEnumeration
+   */
+  omit?: Prisma.CustomerEnumerationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CustomerEnumerationInclude<ExtArgs> | null
+  where?: Prisma.CustomerEnumerationWhereInput
+  orderBy?: Prisma.CustomerEnumerationOrderByWithRelationInput | Prisma.CustomerEnumerationOrderByWithRelationInput[]
+  cursor?: Prisma.CustomerEnumerationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CustomerEnumerationScalarFieldEnum | Prisma.CustomerEnumerationScalarFieldEnum[]
+}
+
+/**
  * Customer without action
  */
 export type CustomerDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2235,4 +2547,8 @@ export type CustomerDefaultArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Omit specific fields from the Customer
    */
   omit?: Prisma.CustomerOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CustomerInclude<ExtArgs> | null
 }

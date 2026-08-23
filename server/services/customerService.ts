@@ -128,8 +128,9 @@ export async function updateCustomer(
   id: number,
   data: Record<string, unknown>,
   userName: string,
+  client: Pick<typeof prisma, "customer"> = prisma,
 ) {
-  return prisma.customer.update({
+  return client.customer.update({
     where: { id },
     data: normalizeCustomerData(data, {
       updatedBy: userName,

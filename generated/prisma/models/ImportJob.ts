@@ -642,14 +642,6 @@ export type EnumImportJobStatusFieldUpdateOperationsInput = {
   set?: $Enums.ImportJobStatus
 }
 
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type ImportJobCreateWithoutUploaded_byInput = {
   file_name: string
   status?: $Enums.ImportJobStatus

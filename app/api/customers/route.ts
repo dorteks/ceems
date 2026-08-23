@@ -53,7 +53,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const created = await createCustomer({
+    const created = await createCustomer(
+      {
       account_number: body.account_number,
       meter_number: body.meter_number,
       surname: body.surname,
@@ -94,12 +95,9 @@ export async function POST(req: Request) {
       enumerator_id: body.enumerator_id ?? null,
       enumerator_phone_number: body.enumerator_phone_number ?? null,
       remark: body.remark ?? null,
-
-      created_at: body.created_at ?? null,
-      updated_at: body.updated_at ?? null,
-      created_by: body.created_by ?? null,
-      updated_by: body.updated_by ?? null,
-    });
+      },
+      currentUser.name,
+    );
 
     await recordAuditEvent({
       actorName: currentUser.name,

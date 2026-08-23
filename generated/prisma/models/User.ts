@@ -297,6 +297,7 @@ export type UserWhereInput = {
   created_by?: Prisma.StringNullableFilter<"User"> | string | null
   updated_by?: Prisma.StringNullableFilter<"User"> | string | null
   importJobs?: Prisma.ImportJobListRelationFilter
+  enumerations?: Prisma.CustomerEnumerationListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -316,6 +317,7 @@ export type UserOrderByWithRelationInput = {
   created_by?: Prisma.SortOrderInput | Prisma.SortOrder
   updated_by?: Prisma.SortOrderInput | Prisma.SortOrder
   importJobs?: Prisma.ImportJobOrderByRelationAggregateInput
+  enumerations?: Prisma.CustomerEnumerationOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -338,6 +340,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   created_by?: Prisma.StringNullableFilter<"User"> | string | null
   updated_by?: Prisma.StringNullableFilter<"User"> | string | null
   importJobs?: Prisma.ImportJobListRelationFilter
+  enumerations?: Prisma.CustomerEnumerationListRelationFilter
 }, "id" | "username" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -400,6 +403,7 @@ export type UserCreateInput = {
   created_by?: string | null
   updated_by?: string | null
   importJobs?: Prisma.ImportJobCreateNestedManyWithoutUploaded_byInput
+  enumerations?: Prisma.CustomerEnumerationCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -419,6 +423,7 @@ export type UserUncheckedCreateInput = {
   created_by?: string | null
   updated_by?: string | null
   importJobs?: Prisma.ImportJobUncheckedCreateNestedManyWithoutUploaded_byInput
+  enumerations?: Prisma.CustomerEnumerationUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -437,6 +442,7 @@ export type UserUpdateInput = {
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   importJobs?: Prisma.ImportJobUpdateManyWithoutUploaded_byNestedInput
+  enumerations?: Prisma.CustomerEnumerationUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -456,6 +462,7 @@ export type UserUncheckedUpdateInput = {
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   importJobs?: Prisma.ImportJobUncheckedUpdateManyWithoutUploaded_byNestedInput
+  enumerations?: Prisma.CustomerEnumerationUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -598,6 +605,22 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }
 
+export type UserCreateNestedOneWithoutEnumerationsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutEnumerationsInput, Prisma.UserUncheckedCreateWithoutEnumerationsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutEnumerationsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutEnumerationsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutEnumerationsInput, Prisma.UserUncheckedCreateWithoutEnumerationsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutEnumerationsInput
+  upsert?: Prisma.UserUpsertWithoutEnumerationsInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutEnumerationsInput, Prisma.UserUpdateWithoutEnumerationsInput>, Prisma.UserUncheckedUpdateWithoutEnumerationsInput>
+}
+
 export type UserCreateNestedOneWithoutImportJobsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutImportJobsInput, Prisma.UserUncheckedCreateWithoutImportJobsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutImportJobsInput
@@ -612,6 +635,96 @@ export type UserUpdateOneWithoutImportJobsNestedInput = {
   delete?: Prisma.UserWhereInput | boolean
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutImportJobsInput, Prisma.UserUpdateWithoutImportJobsInput>, Prisma.UserUncheckedUpdateWithoutImportJobsInput>
+}
+
+export type UserCreateWithoutEnumerationsInput = {
+  username: string
+  name: string
+  email?: string | null
+  phone?: string | null
+  role: $Enums.UserRole
+  hub: $Enums.Hub
+  status?: $Enums.UserStatus
+  password_hash: string
+  must_change_password?: boolean
+  last_login_at?: Date | string | null
+  created_at?: Date | string
+  updated_at?: Date | string
+  created_by?: string | null
+  updated_by?: string | null
+  importJobs?: Prisma.ImportJobCreateNestedManyWithoutUploaded_byInput
+}
+
+export type UserUncheckedCreateWithoutEnumerationsInput = {
+  id?: number
+  username: string
+  name: string
+  email?: string | null
+  phone?: string | null
+  role: $Enums.UserRole
+  hub: $Enums.Hub
+  status?: $Enums.UserStatus
+  password_hash: string
+  must_change_password?: boolean
+  last_login_at?: Date | string | null
+  created_at?: Date | string
+  updated_at?: Date | string
+  created_by?: string | null
+  updated_by?: string | null
+  importJobs?: Prisma.ImportJobUncheckedCreateNestedManyWithoutUploaded_byInput
+}
+
+export type UserCreateOrConnectWithoutEnumerationsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutEnumerationsInput, Prisma.UserUncheckedCreateWithoutEnumerationsInput>
+}
+
+export type UserUpsertWithoutEnumerationsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutEnumerationsInput, Prisma.UserUncheckedUpdateWithoutEnumerationsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutEnumerationsInput, Prisma.UserUncheckedCreateWithoutEnumerationsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutEnumerationsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutEnumerationsInput, Prisma.UserUncheckedUpdateWithoutEnumerationsInput>
+}
+
+export type UserUpdateWithoutEnumerationsInput = {
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  hub?: Prisma.EnumHubFieldUpdateOperationsInput | $Enums.Hub
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  password_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  last_login_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importJobs?: Prisma.ImportJobUpdateManyWithoutUploaded_byNestedInput
+}
+
+export type UserUncheckedUpdateWithoutEnumerationsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  hub?: Prisma.EnumHubFieldUpdateOperationsInput | $Enums.Hub
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  password_hash?: Prisma.StringFieldUpdateOperationsInput | string
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  last_login_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importJobs?: Prisma.ImportJobUncheckedUpdateManyWithoutUploaded_byNestedInput
 }
 
 export type UserCreateWithoutImportJobsInput = {
@@ -629,6 +742,7 @@ export type UserCreateWithoutImportJobsInput = {
   updated_at?: Date | string
   created_by?: string | null
   updated_by?: string | null
+  enumerations?: Prisma.CustomerEnumerationCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutImportJobsInput = {
@@ -647,6 +761,7 @@ export type UserUncheckedCreateWithoutImportJobsInput = {
   updated_at?: Date | string
   created_by?: string | null
   updated_by?: string | null
+  enumerations?: Prisma.CustomerEnumerationUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutImportJobsInput = {
@@ -680,6 +795,7 @@ export type UserUpdateWithoutImportJobsInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enumerations?: Prisma.CustomerEnumerationUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutImportJobsInput = {
@@ -698,6 +814,7 @@ export type UserUncheckedUpdateWithoutImportJobsInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   created_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updated_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enumerations?: Prisma.CustomerEnumerationUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -707,10 +824,12 @@ export type UserUncheckedUpdateWithoutImportJobsInput = {
 
 export type UserCountOutputType = {
   importJobs: number
+  enumerations: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   importJobs?: boolean | UserCountOutputTypeCountImportJobsArgs
+  enumerations?: boolean | UserCountOutputTypeCountEnumerationsArgs
 }
 
 /**
@@ -728,6 +847,13 @@ export type UserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensi
  */
 export type UserCountOutputTypeCountImportJobsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ImportJobWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountEnumerationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CustomerEnumerationWhereInput
 }
 
 
@@ -748,6 +874,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   created_by?: boolean
   updated_by?: boolean
   importJobs?: boolean | Prisma.User$importJobsArgs<ExtArgs>
+  enumerations?: boolean | Prisma.User$enumerationsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -808,6 +935,7 @@ export type UserSelectScalar = {
 export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username" | "name" | "email" | "phone" | "role" | "hub" | "status" | "password_hash" | "must_change_password" | "last_login_at" | "created_at" | "updated_at" | "created_by" | "updated_by", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   importJobs?: boolean | Prisma.User$importJobsArgs<ExtArgs>
+  enumerations?: boolean | Prisma.User$enumerationsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -817,6 +945,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   name: "User"
   objects: {
     importJobs: Prisma.$ImportJobPayload<ExtArgs>[]
+    enumerations: Prisma.$CustomerEnumerationPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1229,6 +1358,7 @@ readonly fields: UserFieldRefs;
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   importJobs<T extends Prisma.User$importJobsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$importJobsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ImportJobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  enumerations<T extends Prisma.User$enumerationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$enumerationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CustomerEnumerationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1687,6 +1817,30 @@ export type User$importJobsArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   distinct?: Prisma.ImportJobScalarFieldEnum | Prisma.ImportJobScalarFieldEnum[]
+}
+
+/**
+ * User.enumerations
+ */
+export type User$enumerationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CustomerEnumeration
+   */
+  select?: Prisma.CustomerEnumerationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CustomerEnumeration
+   */
+  omit?: Prisma.CustomerEnumerationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CustomerEnumerationInclude<ExtArgs> | null
+  where?: Prisma.CustomerEnumerationWhereInput
+  orderBy?: Prisma.CustomerEnumerationOrderByWithRelationInput | Prisma.CustomerEnumerationOrderByWithRelationInput[]
+  cursor?: Prisma.CustomerEnumerationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CustomerEnumerationScalarFieldEnum | Prisma.CustomerEnumerationScalarFieldEnum[]
 }
 
 /**

@@ -53,6 +53,7 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   Customer: 'Customer',
   User: 'User',
+  CustomerEnumeration: 'CustomerEnumeration',
   ImportJob: 'ImportJob',
   AuditEvent: 'AuditEvent'
 } as const
@@ -138,6 +139,20 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const CustomerEnumerationScalarFieldEnum = {
+  id: 'id',
+  customer_id: 'customer_id',
+  user_id: 'user_id',
+  user_name: 'user_name',
+  service_center: 'service_center',
+  enumerated_at: 'enumerated_at',
+  before_data: 'before_data',
+  after_data: 'after_data'
+} as const
+
+export type CustomerEnumerationScalarFieldEnum = (typeof CustomerEnumerationScalarFieldEnum)[keyof typeof CustomerEnumerationScalarFieldEnum]
 
 
 export const ImportJobScalarFieldEnum = {

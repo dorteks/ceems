@@ -114,39 +114,42 @@ export async function recordAuditEvent(input: {
   metadata?: Record<string, unknown> | null;
   occurredAt?: Date;
 }) {
-  const occurredAt = input.occurredAt ?? new Date();
-  const metadataSql = input.metadata
-    ? Prisma.sql`${JSON.stringify(input.metadata)}::jsonb`
-    : Prisma.sql`NULL`;
+  return recordAuditEventWithClient(prisma, input);
+}
 
-  const [row] = await prisma.$queryRaw<Pick<AuditEventRow, "id">[]>(Prisma.sql`
-    INSERT INTO "audit_events" (
-      actor_name,
-      actor_username,
-      actor_role,
-      action,
-      entity_type,
-      entity_id,
-      entity_label,
-      before_value,
-      after_value,
-      metadata,
-      occurred_at
-    ) VALUES (
-      ${input.actorName},
-      ${input.actorUsername ?? null},
-      ${input.actorRole ?? null},
-      ${input.action},
-      ${input.entityType},
-      ${input.entityId == null ? null : String(input.entityId)},
-      ${input.entityLabel},
-      ${input.beforeValue ?? null},
-      ${input.afterValue ?? null},
-      ${metadataSql},
-      ${occurredAt}
-    )
-    RETURNING id
-  `);
+export async function recordAuditEventWithClient(
+  client: Pick<typeof prisma, "auditEvent">,
+  input: {
+    actorName: string;
+    actorUsername?: string | null;
+    actorRole?: string | null;
+    action: string;
+    entityType: string;
+    entityId?: string | number | null;
+    entityLabel: string;
+    beforeValue?: string | null;
+    afterValue?: string | null;
+    metadata?: Record<string, unknown> | null;
+    occurredAt?: Date;
+  },
+) {
+  const created = await client.auditEvent.create({
+    data: {
+      actor_name: input.actorName,
+      actor_username: input.actorUsername ?? null,
+      actor_role: input.actorRole ?? null,
+      action: input.action,
+      entity_type: input.entityType,
+      entity_id: input.entityId == null ? null : String(input.entityId),
+      entity_label: input.entityLabel,
+      before_value: input.beforeValue ?? null,
+      after_value: input.afterValue ?? null,
+      metadata: input.metadata
+        ? (input.metadata as Prisma.InputJsonValue)
+        : undefined,
+      occurred_at: input.occurredAt ?? new Date(),
+    },
+  });
 
-  return row?.id ?? null;
+  return created.id;
 }

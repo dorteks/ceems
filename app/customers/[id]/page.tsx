@@ -289,6 +289,7 @@ export default function CustomerDetail() {
                 />
               </TabsContent>
 
+              {/* // enumeration history here */}
               <TabsContent value="history" className="pt-4">
                 <div className="overflow-x-auto">
                   <Table>
