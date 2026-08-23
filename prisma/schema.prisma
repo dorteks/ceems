@@ -16,6 +16,7 @@ enum ServiceCenter {
   KELEBE_2
   OGO_OLUWA
   OKE_FIA
+  OKEFIA
   OSOGBO_1
   OSOGBO_2
   OTA_EFUN
