@@ -57,6 +57,7 @@ enum Status {
   INACTIVE
   PENDING
   DISCONNECTED
+  SUSPENDED
 }
 
 enum UserRole {

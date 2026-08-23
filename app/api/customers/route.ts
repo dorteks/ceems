@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import {
   listCustomers,
   createCustomer,
+  deleteAllCustomers,
 } from "../../../server/services/customerService";
 import { getSessionUser } from "../../../server/services/userService";
 import { recordAuditEvent } from "../../../server/services/auditService";
@@ -23,9 +24,11 @@ export async function GET(req: Request) {
     const size = parseInt(url.searchParams.get("size") || "50", 10);
 
     const result = await listCustomers({ page, size });
+
     return NextResponse.json(result, { status: 200 });
   } catch (error: unknown) {
     console.error(error);
+
     return NextResponse.json(
       { error: "Failed to fetch customers" },
       { status: 500 },
@@ -36,13 +39,13 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const currentUser = await getCurrentUser();
+
     if (!currentUser) {
       return NextResponse.json({ error: "Not signed in" }, { status: 401 });
     }
 
     const body = (await req.json()) as Record<string, unknown>;
 
-    // Basic validation
     if (!body.account_number || !body.surname || !body.first_name) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -51,7 +54,6 @@ export async function POST(req: Request) {
     }
 
     const created = await createCustomer({
-      // account and meter
       account_number: body.account_number,
       meter_number: body.meter_number,
       surname: body.surname,
@@ -59,14 +61,12 @@ export async function POST(req: Request) {
       other_name: body.other_name ?? null,
       customer_type: body.customer_type ?? undefined,
 
-      // meter and category
       meter_type: body.meter_type ?? undefined,
       meter_phase: body.meter_phase ?? undefined,
       customer_category: body.customer_category ?? undefined,
       nin: body.nin ?? null,
       premise_type: body.premise_type ?? undefined,
 
-      // location
       address: body.address ?? null,
       city: body.city ?? null,
       state: body.state ?? null,
@@ -77,12 +77,10 @@ export async function POST(req: Request) {
       longitude: body.longitude ?? null,
       latitude: body.latitude ?? null,
 
-      // contact
       email: body.email ?? null,
       phone: body.phone ?? null,
       nature_of_business: body.nature_of_business ?? null,
 
-      // feeder & grid
       dss_id: body.dss_id ?? null,
       dss_name: body.dss_name ?? null,
       feeder_id: body.feeder_id ?? null,
@@ -92,13 +90,11 @@ export async function POST(req: Request) {
       business_hub: body.business_hub ?? null,
       region: body.region ?? null,
 
-      // enumerator
       enumerator_name: body.enumerator_name ?? null,
       enumerator_id: body.enumerator_id ?? null,
       enumerator_phone_number: body.enumerator_phone_number ?? null,
       remark: body.remark ?? null,
 
-      // date
       created_at: body.created_at ?? null,
       updated_at: body.updated_at ?? null,
       created_by: body.created_by ?? null,
@@ -124,8 +120,52 @@ export async function POST(req: Request) {
     return NextResponse.json(created, { status: 201 });
   } catch (error: unknown) {
     console.error(error);
+
     const message =
       error instanceof Error ? error.message : "Failed to create customer";
+
     return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function DELETE() {
+  try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+    }
+
+    const result = await deleteAllCustomers();
+
+    await recordAuditEvent({
+      actorName: currentUser.name,
+      actorUsername: currentUser.username,
+      actorRole: currentUser.role,
+      action: "Deleted all customers",
+      entityType: "customer",
+      entityId: "all",
+      entityLabel: "All customers",
+      beforeValue: `${result.deleted} customers`,
+      afterValue: "0 customers",
+      metadata: {
+        deletedCount: result.deleted,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        deleted: result.deleted,
+      },
+      { status: 200 },
+    );
+  } catch (error: unknown) {
+    console.error("Failed to delete all customers:", error);
+
+    return NextResponse.json(
+      { error: "Failed to delete all customers" },
+      { status: 500 },
+    );
   }
 }

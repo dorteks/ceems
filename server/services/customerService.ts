@@ -123,6 +123,14 @@ export async function deleteCustomer(id: number) {
   return prisma.customer.delete({ where: { id } });
 }
 
+export async function deleteAllCustomers() {
+  const result = await prisma.customer.deleteMany({});
+
+  return {
+    deleted: result.count,
+  };
+}
+
 export async function getCustomerById(id: number) {
   return prisma.customer.findUnique({ where: { id } });
 }

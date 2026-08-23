@@ -126,7 +126,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadCustomerCount = async () => {
       try {
-        const response = await fetch("/api/dashboard", {
+        const response = await fetch("/api/customers?page=1&size=1", {
           credentials: "include",
         });
 
@@ -136,14 +136,13 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         const data = await response.json();
 
-        const totalCustomers = data?.kpis?.find(
-          (kpi: { label: string; value: string }) =>
-            kpi.label === "Total customers",
-        )?.value;
-
-        setCustomerCount(totalCustomers ? Number(totalCustomers) : null);
+        if (typeof data.total === "number") {
+          setCustomerCount(data.total);
+        } else {
+          setCustomerCount(null);
+        }
       } catch {
-        // Keep the count unavailable if the request fails.
+        setCustomerCount(null);
       }
     };
 

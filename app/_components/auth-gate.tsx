@@ -16,8 +16,8 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!ready) return;
     if (!user && !isPublic) router.replace("/auth/login");
-    if (user && user.mustChangePassword && pathname !== "/account/change-password") {
-      router.replace("/account/change-password");
+    if (user && user.mustChangePassword && pathname !== "/account") {
+      router.replace("/account");
       return;
     }
     if (user && isPublic) router.replace("/dashboard");

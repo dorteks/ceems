@@ -8,6 +8,7 @@ import {
   Plus,
   RotateCcw,
   Search,
+  Trash,
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -250,6 +251,42 @@ export default function CustomersPage() {
     }
   };
 
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
+
+  const handleDeleteAllCustomers = async () => {
+    setDeletingAll(true);
+
+    try {
+      const response = await fetch("/api/customers", {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(result?.error || "Failed to delete all customers");
+      }
+
+      setApiCustomers([]);
+      setSelected([]);
+      setTotalCount(0);
+
+      toast.success(`${result.deleted ?? 0} customers deleted successfully`);
+
+      setDeleteAllOpen(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete all customers",
+      );
+    } finally {
+      setDeletingAll(false);
+    }
+  };
+
   return (
     <>
       <PageHeader
@@ -257,6 +294,15 @@ export default function CustomersPage() {
         description={`${rows.length} records shown${loading ? " (loading...)" : ""}${loadError ? " (demo data)" : ""}`}
         actions={
           <>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteAllOpen(true)}
+              disabled={loading || deletingAll}
+            >
+              <Trash className="size-4" />
+              Delete All Customers
+            </Button>
             <Button
               onClick={() =>
                 toast.message("Coming soon", {
@@ -522,6 +568,16 @@ export default function CustomersPage() {
         }
         confirmLabel="Delete customer"
         isDeleting={Boolean(deletingId)}
+      />
+
+      <DeleteConfirmationDialog
+        open={deleteAllOpen}
+        onOpenChange={setDeleteAllOpen}
+        onConfirm={handleDeleteAllCustomers}
+        title="Delete all customers?"
+        description={`This will permanently delete all ${totalCount.toLocaleString()} customer records. This action cannot be undone.`}
+        confirmLabel="Delete all customers"
+        isDeleting={deletingAll}
       />
     </>
   );

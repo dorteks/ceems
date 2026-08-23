@@ -248,13 +248,6 @@ export async function parseAndImportXlsx(
     const rowNum = i + 2;
     const validation = validateCustomer(mapped[i], rowNum);
 
-    // extra validations
-    const phone = normalizePhone(mapped[i].phone);
-    if (mapped[i].phone && !phone) {
-      validation.valid = false;
-      validation.errors.push("phone is invalid or not 11 digits");
-    }
-
     if (mapped[i].nin) {
       const nin = String(mapped[i].nin).replace(/\D+/g, "");
       if (nin.length !== 11) validation.errors.push("nin must be 11 digits");
@@ -265,13 +258,18 @@ export async function parseAndImportXlsx(
     }
 
     if (validation.errors.length) {
-      errors.push({ row: rowNum, errors: validation.errors, data: mapped[i] });
+      errors.push({
+        row: rowNum,
+        errors: validation.errors,
+        data: mapped[i],
+      });
       continue;
     }
 
     // normalize some fields
-    if (phone) mapped[i].phone = phone;
-    if (mapped[i].state) mapped[i].state = normalizeState(mapped[i].state);
+    if (mapped[i].state) {
+      mapped[i].state = normalizeState(mapped[i].state);
+    }
 
     validCustomers.push(mapped[i]);
   }
