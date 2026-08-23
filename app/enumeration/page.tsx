@@ -40,6 +40,7 @@ import {
 import { ServiceCenter, type ServiceCenterValue } from "@/lib/prisma-enums";
 import { PageHeader } from "../_components/app-shell";
 import { useAuth } from "@/lib/auth/auth";
+import { useRouter } from "next/navigation";
 
 type EnumerationItem = {
   id: number;
@@ -144,6 +145,7 @@ function buildCsv(items: EnumerationItem[]) {
 
 export default function EnumerationPage() {
   const { adminAccess } = useAuth();
+  const router = useRouter();
 
   const [items, setItems] = useState<EnumerationItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -453,7 +455,7 @@ export default function EnumerationPage() {
                     {loading ? (
                       <TableRow>
                         <TableCell
-                          colSpan={5}
+                          colSpan={6}
                           className="py-10 text-center text-muted-foreground"
                         >
                           Loading enumeration records...
@@ -462,7 +464,7 @@ export default function EnumerationPage() {
                     ) : items.length === 0 ? (
                       <TableRow>
                         <TableCell
-                          colSpan={5}
+                          colSpan={6}
                           className="py-10 text-center text-muted-foreground"
                         >
                           No enumeration records match the selected filters.
@@ -470,10 +472,17 @@ export default function EnumerationPage() {
                       </TableRow>
                     ) : (
                       items.map((item) => (
-                        <TableRow key={item.id}>
+                        <TableRow
+                          key={item.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() =>
+                            router.push(`/customers/${item.customerId}`)
+                          }
+                        >
                           <TableCell className="font-medium">
                             #{item.customerId}
                           </TableCell>
+
                           <TableCell className="font-medium">
                             <div className="flex flex-col gap-0.5">
                               <span>{item.accountNumber}</span>
@@ -482,15 +491,19 @@ export default function EnumerationPage() {
                               </span>
                             </div>
                           </TableCell>
+
                           <TableCell>
                             {item.userName || "Unknown user"}
                           </TableCell>
+
                           <TableCell>
                             {formatServiceCenter(item.serviceCenter)}
                           </TableCell>
+
                           <TableCell className="text-numeric text-muted-foreground">
                             {formatDateTime(item.enumeratedAt)}
                           </TableCell>
+
                           <TableCell className="max-w-xs text-sm text-muted-foreground">
                             {getSummaryText(item)}
                           </TableCell>

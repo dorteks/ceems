@@ -247,7 +247,28 @@ export default function CustomerDetail() {
 
       <PageHeader
         title={title}
-        description={`Account ${c.account_number} · ${c.customer_type ?? "Unclassified"} · ${c.business_hub ?? "Unknown"} hub`}
+        description={
+          <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-4">
+            <span>
+              Account -{" "}
+              <span className="font-semibold text-foreground">
+                {c.account_number}
+              </span>
+            </span>
+
+            <span>
+              Meter -{" "}
+              <span className="font-semibold text-foreground">
+                {c.meter_number ?? "—"}
+              </span>
+            </span>
+
+            <span className="flex flex-row gap-2">
+              {c.customer_type ?? "Unclassified"} ·{" "}
+              {c.business_hub ?? "Unknown"} hub
+            </span>
+          </div>
+        }
         actions={
           <>
             {/* <Button variant="outline" size="sm">
@@ -287,6 +308,7 @@ export default function CustomerDetail() {
                 value="customer"
                 className="grid gap-4 pt-4 sm:grid-cols-2 lg:grid-cols-3"
               >
+                <Field label="Account No." value={c.account_number} />
                 <Field label="Surname" value={c.surname} />
                 <Field label="First name" value={c.first_name} />
                 <Field label="Other name" value={c.other_name} />

@@ -113,6 +113,93 @@ function normalizeCustomerData(
   };
 }
 
+function normalizeFilter(value?: string | null) {
+  const trimmed = value?.trim();
+
+  return trimmed && trimmed.length > 0 ? trimmed : undefined;
+}
+
+function mapStatusFilter(value?: string | null) {
+  const normalized = normalizeFilter(value);
+
+  if (!normalized) {
+    return undefined;
+  }
+
+  const lookup = normalized.toUpperCase();
+  return lookup as StatusValue;
+}
+
+function mapFeederBandFilter(value?: string | null) {
+  const normalized = normalizeFilter(value);
+
+  if (!normalized) {
+    return undefined;
+  }
+
+  const bandMatch = normalized.match(/band\s*([a-e])/i);
+  if (bandMatch?.[1]) {
+    return bandMatch[1].toUpperCase();
+  }
+
+  return normalized.charAt(0).toUpperCase();
+}
+
+function buildCustomerWhere(options?: {
+  search?: string;
+  status?: string | null;
+  lga?: string | null;
+  feederBand?: string | null;
+  state?: string | null;
+}) {
+  const where: Prisma.CustomerWhereInput = {};
+  const search = normalizeFilter(options?.search);
+
+  if (search) {
+    where.OR = [
+      { account_number: { contains: search, mode: "insensitive" } },
+      { meter_number: { contains: search, mode: "insensitive" } },
+      { surname: { contains: search, mode: "insensitive" } },
+      { first_name: { contains: search, mode: "insensitive" } },
+      { other_name: { contains: search, mode: "insensitive" } },
+      { nin: { contains: search, mode: "insensitive" } },
+      { phone: { contains: search, mode: "insensitive" } },
+      { email: { contains: search, mode: "insensitive" } },
+      { address: { contains: search, mode: "insensitive" } },
+      { feeder_name: { contains: search, mode: "insensitive" } },
+      { feeder_band: { contains: search, mode: "insensitive" } },
+      { feeder_id: { contains: search, mode: "insensitive" } },
+      { lga: { contains: search, mode: "insensitive" } },
+      { state: { contains: search, mode: "insensitive" } },
+    ];
+  }
+
+  const status = mapStatusFilter(options?.status);
+  if (status) {
+    where.status = status;
+  }
+
+  const lga = normalizeFilter(options?.lga);
+  if (lga) {
+    where.lga = { equals: lga, mode: "insensitive" };
+  }
+
+  const feederBand = mapFeederBandFilter(options?.feederBand);
+  if (feederBand) {
+    where.feeder_band = {
+      startsWith: feederBand,
+      mode: "insensitive",
+    };
+  }
+
+  const state = normalizeFilter(options?.state);
+  if (state) {
+    where.state = { equals: state, mode: "insensitive" };
+  }
+
+  return where;
+}
+
 export async function createCustomer(
   data: Record<string, unknown>,
   userName: string,
@@ -154,18 +241,34 @@ export async function getCustomerById(id: number) {
   return prisma.customer.findUnique({ where: { id } });
 }
 
-export async function listCustomers(opts?: { page?: number; size?: number }) {
+export async function listCustomers(opts?: {
+  page?: number;
+  size?: number;
+  search?: string;
+  status?: string | null;
+  lga?: string | null;
+  feederBand?: string | null;
+  state?: string | null;
+}) {
   const page = opts?.page && opts.page > 0 ? opts.page : 1;
   const size = opts?.size && opts.size > 0 ? opts.size : 50;
   const skip = (page - 1) * size;
+  const where = buildCustomerWhere({
+    search: opts?.search,
+    status: opts?.status,
+    lga: opts?.lga,
+    feederBand: opts?.feederBand,
+    state: opts?.state,
+  });
 
   const [items, total] = await Promise.all([
     prisma.customer.findMany({
+      where,
       skip,
       take: size,
       orderBy: { created_at: "desc" },
     }),
-    prisma.customer.count(),
+    prisma.customer.count({ where }),
   ]);
 
   return { items, total, page, size };

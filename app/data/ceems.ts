@@ -429,8 +429,17 @@ export const lgaOptions = ["All LGAs", ...lgas];
 export const statusOptions = [
   "All statuses",
   "Active",
-  "Pending",
   "Inactive",
-  "Flagged",
+  "Pending",
+  "Suspended",
+  "Disconnected",
 ];
 export const feederOptions = ["All feeders", ...feeders];
+export const feederBands = [
+  "All bands",
+  "Band A",
+  "Band B",
+  "Band C",
+  "Band D",
+  "Band E",
+] as const;
