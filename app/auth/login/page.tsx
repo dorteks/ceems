@@ -68,9 +68,7 @@ export default function LoginPage() {
         <Card className="py-6 space-y-6">
           <CardHeader>
             <CardTitle>Sign in</CardTitle>
-            <CardDescription>
-              Use your username and password.
-            </CardDescription>
+            <CardDescription>Use your username and password.</CardDescription>
           </CardHeader>
           <CardContent>
             <form
@@ -83,11 +81,7 @@ export default function LoginPage() {
                   return;
                 }
                 setError(null);
-                router.push(
-                  res.mustChangePassword
-                    ? "/account/change-password"
-                    : "/dashboard",
-                );
+                router.push(res.mustChangePassword ? "/account" : "/dashboard");
               }}
             >
               {error ? (
@@ -144,15 +138,15 @@ export default function LoginPage() {
                         method: "GET",
                         cache: "no-store",
                       });
-                      const data = (await response.json().catch(() => null)) as
-                        | {
-                            ok?: boolean;
-                            error?: string;
-                            users?: number;
-                            customers?: number;
-                            durationMs?: number;
-                          }
-                        | null;
+                      const data = (await response
+                        .json()
+                        .catch(() => null)) as {
+                        ok?: boolean;
+                        error?: string;
+                        users?: number;
+                        customers?: number;
+                        durationMs?: number;
+                      } | null;
 
                       if (!response.ok || !data?.ok) {
                         setDbCheckState({

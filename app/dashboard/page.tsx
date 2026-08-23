@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ArrowUpRight, Download, RefreshCw } from "lucide-react";
+import { ArrowUpRight, Download, RefreshCw, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
