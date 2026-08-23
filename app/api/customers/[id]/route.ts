@@ -14,7 +14,9 @@ const SESSION_COOKIE = "ceems_session";
 async function getCurrentUser() {
   const cookieStore = await cookies();
   const userId = Number(cookieStore.get(SESSION_COOKIE)?.value);
+
   if (!Number.isInteger(userId)) return null;
+
   return getSessionUser(userId);
 }
 
@@ -49,6 +51,7 @@ export async function PUT(
 ) {
   try {
     const currentUser = await getCurrentUser();
+
     if (!currentUser) {
       return NextResponse.json({ error: "Not signed in" }, { status: 401 });
     }
@@ -73,36 +76,44 @@ export async function PUT(
     }
 
     const before = await getCustomerById(id);
-    const updated = await updateCustomer(id, body);
 
-    if (before) {
-      await recordAuditEvent({
-        actorName: currentUser.name,
-        actorUsername: currentUser.username,
-        actorRole: currentUser.role,
-        action: "Updated customer",
-        entityType: "customer",
-        entityId: id,
-        entityLabel: updated.account_number,
-        beforeValue: `${before.status ?? "Unclassified"} / ${before.meter_number ?? "No meter"} / ${before.business_hub ?? "Unknown hub"}`,
-        afterValue: `${updated.status ?? "Unclassified"} / ${updated.meter_number ?? "No meter"} / ${updated.business_hub ?? "Unknown hub"}`,
-        metadata: {
-          account_number: updated.account_number,
-          hub: updated.business_hub,
-          service_center: updated.service_center,
-        },
-      });
+    if (!before) {
+      return NextResponse.json(
+        { error: "Customer not found" },
+        { status: 404 },
+      );
     }
+
+    // The server supplies the current user's name.
+    // The client cannot control updated_by.
+    const updated = await updateCustomer(id, body, currentUser.name);
+
+    await recordAuditEvent({
+      actorName: currentUser.name,
+      actorUsername: currentUser.username,
+      actorRole: currentUser.role,
+      action: "Updated customer",
+      entityType: "customer",
+      entityId: id,
+      entityLabel: updated.account_number,
+      beforeValue: `${before.status ?? "Unclassified"} / ${before.meter_number ?? "No meter"} / ${before.business_hub ?? "Unknown hub"}`,
+      afterValue: `${updated.status ?? "Unclassified"} / ${updated.meter_number ?? "No meter"} / ${updated.business_hub ?? "Unknown hub"}`,
+      metadata: {
+        account_number: updated.account_number,
+        hub: updated.business_hub,
+        service_center: updated.service_center,
+        updated_by: currentUser.name,
+      },
+    });
 
     return NextResponse.json(updated, { status: 200 });
   } catch (error: unknown) {
     console.error(error);
+
     return NextResponse.json(
       {
         error:
-          error instanceof Error
-            ? error.message
-            : "Failed to update customer",
+          error instanceof Error ? error.message : "Failed to update customer",
       },
       { status: 500 },
     );
@@ -115,6 +126,7 @@ export async function DELETE(
 ) {
   try {
     const currentUser = await getCurrentUser();
+
     if (!currentUser) {
       return NextResponse.json({ error: "Not signed in" }, { status: 401 });
     }
@@ -130,34 +142,39 @@ export async function DELETE(
     }
 
     const before = await getCustomerById(id);
+
+    if (!before) {
+      return NextResponse.json(
+        { error: "Customer not found" },
+        { status: 404 },
+      );
+    }
+
     await deleteCustomer(id);
 
-    if (before) {
-      await recordAuditEvent({
-        actorName: currentUser.name,
-        actorUsername: currentUser.username,
-        actorRole: currentUser.role,
-        action: "Deleted customer",
-        entityType: "customer",
-        entityId: id,
-        entityLabel: before.account_number,
-        beforeValue: `${before.status ?? "Unclassified"} / ${before.meter_number ?? "No meter"} / ${before.business_hub ?? "Unknown hub"}`,
-        afterValue: "Deleted",
-        metadata: {
-          account_number: before.account_number,
-        },
-      });
-    }
+    await recordAuditEvent({
+      actorName: currentUser.name,
+      actorUsername: currentUser.username,
+      actorRole: currentUser.role,
+      action: "Deleted customer",
+      entityType: "customer",
+      entityId: id,
+      entityLabel: before.account_number,
+      beforeValue: `${before.status ?? "Unclassified"} / ${before.meter_number ?? "No meter"} / ${before.business_hub ?? "Unknown hub"}`,
+      afterValue: "Deleted",
+      metadata: {
+        account_number: before.account_number,
+      },
+    });
 
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error: unknown) {
     console.error(error);
+
     return NextResponse.json(
       {
         error:
-          error instanceof Error
-            ? error.message
-            : "Failed to delete customer",
+          error instanceof Error ? error.message : "Failed to delete customer",
       },
       { status: 500 },
     );

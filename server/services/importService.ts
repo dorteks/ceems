@@ -158,7 +158,7 @@ function validateCustomer(
   const errors: string[] = [];
 
   if (!customer.account_number) errors.push("account_number is required");
-  if (!customer.surname) errors.push("surname is required");
+  // if (!customer.surname) errors.push("surname is required");
   //   if (!customer.first_name) errors.push("first_name is required");
 
   if (errors.length) {

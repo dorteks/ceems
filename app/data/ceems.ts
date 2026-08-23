@@ -204,7 +204,7 @@ export const kpis = [
     tone: "warning" as const,
   },
   {
-    label: "Data quality issues",
+    label: "Awaiting enumeration",
     value: "4,127",
     delta: "1,204 duplicates",
     tone: "destructive" as const,

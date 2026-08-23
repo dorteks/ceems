@@ -66,6 +66,9 @@ type CustomerDetailRecord = {
   enumerator_phone_number: string | null;
   remark: string | null;
   created_at: string;
+  updated_at: string;
+  created_by: string;
+  updated_by: string;
 };
 
 function Field({
@@ -342,7 +345,18 @@ export default function CustomerDetail() {
               <Field label="Remarks" value={c.remark} />
               <Field
                 label="Date created"
-                value={new Date(c.created_at).toLocaleDateString()}
+                value={new Date(c.created_at).toLocaleString([], {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              />
+              <Field label="Updated By" value={c.updated_by} />
+              <Field
+                label="Date updated"
+                value={new Date(c.updated_at).toLocaleString([], {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
               />
             </CardContent>
           </Card>

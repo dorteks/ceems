@@ -45,7 +45,13 @@ function normalizeNumber(value: unknown) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function normalizeCustomerData(data: Record<string, unknown>) {
+function normalizeCustomerData(
+  data: Record<string, unknown>,
+  options?: {
+    createdBy?: string;
+    updatedBy?: string;
+  },
+) {
   return {
     account_number: normalizeRequiredString(data.account_number),
     meter_number: normalizeString(data.meter_number),
@@ -100,22 +106,34 @@ function normalizeCustomerData(data: Record<string, unknown>) {
     enumerator_id: normalizeString(data.enumerator_id),
     enumerator_phone_number: normalizeString(data.enumerator_phone_number),
     remark: normalizeString(data.remark),
-    created_by: normalizeString(data.created_by),
-    updated_by: normalizeString(data.updated_by),
+
+    // Server-controlled audit fields
+    created_by: options?.createdBy ?? null,
+    updated_by: options?.updatedBy ?? null,
   };
 }
 
-export async function createCustomer(data: Record<string, unknown>) {
-  return prisma.customer.create({ data: normalizeCustomerData(data) });
+export async function createCustomer(
+  data: Record<string, unknown>,
+  userName: string,
+) {
+  return prisma.customer.create({
+    data: normalizeCustomerData(data, {
+      createdBy: userName,
+    }),
+  });
 }
 
 export async function updateCustomer(
   id: number,
   data: Record<string, unknown>,
+  userName: string,
 ) {
   return prisma.customer.update({
     where: { id },
-    data: normalizeCustomerData(data),
+    data: normalizeCustomerData(data, {
+      updatedBy: userName,
+    }),
   });
 }
 
@@ -161,7 +179,11 @@ export async function importCustomers(
   for (let i = 0; i < customers.length; i += batchSize) {
     const batch = customers.slice(i, i + batchSize);
 
-    const prepared = batch.map((c) => normalizeCustomerData(c));
+    const prepared = batch.map((customer) =>
+      normalizeCustomerData(customer, {
+        createdBy: "upload",
+      }),
+    );
 
     const result = await prisma.customer.createMany({
       data: prepared as Prisma.CustomerCreateManyInput[],
