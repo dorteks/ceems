@@ -53,6 +53,7 @@ import {
   type ServiceCenterValue,
   type StatusValue,
 } from "@/lib/prisma-enums";
+import { useAuth } from "@/lib/auth/auth";
 
 type CustomerTableRow = {
   id: string | number;
@@ -132,6 +133,8 @@ type CustomerTableRow = {
 
 export default function CustomersPage() {
   const router = useRouter();
+  const { adminAccess } = useAuth();
+
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("All statuses");
   const [lga, setLga] = useState("All LGAs");
@@ -294,26 +297,32 @@ export default function CustomersPage() {
         description={`${rows.length} records shown${loading ? " (loading...)" : ""}${loadError ? " (demo data)" : ""}`}
         actions={
           <>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setDeleteAllOpen(true)}
-              disabled={loading || deletingAll}
-            >
-              <Trash className="size-4" />
-              Delete All Customers
-            </Button>
-            <Button
-              onClick={() =>
-                toast.message("Coming soon", {
-                  position: "top-right",
-                })
-              }
-              variant="outline"
-              size="sm"
-            >
-              <Download className="size-4" /> Export
-            </Button>
+            {adminAccess && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setDeleteAllOpen(true)}
+                disabled={loading || deletingAll}
+              >
+                <Trash className="size-4" />
+                Delete All Customers
+              </Button>
+            )}
+
+            {adminAccess && (
+              <Button
+                onClick={() =>
+                  toast.message("Coming soon", {
+                    position: "top-right",
+                  })
+                }
+                variant="outline"
+                size="sm"
+              >
+                <Download className="size-4" /> Export
+              </Button>
+            )}
+
             <Button size="sm">
               <Link
                 className="flex flex-row gap-2 items-center"

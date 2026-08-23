@@ -31,11 +31,67 @@ type AuditEvent = {
 };
 
 export default function AuditPage() {
-  const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
+  const [query, setQuery] = useState("");
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const searchAuditLog = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const params = new URLSearchParams();
+        params.set("limit", "100");
+
+        if (query.trim()) {
+          params.set("q", query.trim());
+        }
+
+        const response = await fetch(`/api/audit?${params.toString()}`, {
+          credentials: "include",
+          signal: controller.signal,
+        });
+
+        const json = (await response.json().catch(() => null)) as {
+          events?: AuditEvent[];
+          error?: string;
+        } | null;
+
+        if (!response.ok || !json?.events) {
+          setEvents([]);
+          setError(json?.error ?? "Failed to load audit trail");
+          return;
+        }
+
+        setEvents(json.events);
+      } catch (error) {
+        // Ignore aborted requests caused by typing a new search
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+
+        setEvents([]);
+        setError("Failed to load audit trail");
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    // Wait until the user pauses typing before searching
+    const timeout = setTimeout(searchAuditLog, 300);
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [query]);
 
   const fetchEvents = async (search = submittedQuery) => {
     try {
@@ -50,9 +106,10 @@ export default function AuditPage() {
         credentials: "include",
       });
 
-      const json = (await response.json().catch(() => null)) as
-        | { events?: AuditEvent[]; error?: string }
-        | null;
+      const json = (await response.json().catch(() => null)) as {
+        events?: AuditEvent[];
+        error?: string;
+      } | null;
 
       if (!response.ok || !json?.events) {
         setEvents([]);
@@ -77,7 +134,9 @@ export default function AuditPage() {
     if (!events.length) return;
 
     const rows = [
-      ["actor", "role", "action", "entity", "before", "after", "when"].join(","),
+      ["actor", "role", "action", "entity", "before", "after", "when"].join(
+        ",",
+      ),
       ...events.map((event) =>
         [
           `"${event.actorName.replace(/"/g, '""')}"`,
@@ -106,7 +165,12 @@ export default function AuditPage() {
         title="Audit trail"
         description="Every create, update and delete is recorded with before and after values"
         actions={
-          <Button variant="outline" size="sm" onClick={exportCsv} disabled={!events.length}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportCsv}
+            disabled={!events.length}
+          >
             <Download className="size-4" /> Export log
           </Button>
         }
@@ -121,16 +185,10 @@ export default function AuditPage() {
       ) : null}
 
       <Card className="mb-4">
-        <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row">
-          <form
-            className="relative flex-1"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setSubmittedQuery(query);
-              void fetchEvents(query);
-            }}
-          >
+        <CardContent className="pt-6">
+          <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
             <Input
               placeholder="Search by actor, entity or action"
               className="pl-9"
@@ -138,17 +196,13 @@ export default function AuditPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-          </form>
-          <Button
-            size="sm"
-            className="sm:w-32"
-            onClick={() => {
-              setSubmittedQuery(query);
-              void fetchEvents(query);
-            }}
-          >
-            Search
-          </Button>
+
+            {loading && query.trim() ? (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                Searching...
+              </div>
+            ) : null}
+          </div>
         </CardContent>
       </Card>
 
@@ -170,7 +224,10 @@ export default function AuditPage() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
+                    <TableCell
+                      colSpan={7}
+                      className="py-8 text-center text-muted-foreground"
+                    >
                       Loading audit trail...
                     </TableCell>
                   </TableRow>
@@ -188,14 +245,21 @@ export default function AuditPage() {
                         </div>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <Badge className="rounded-sm bg-muted px-2 py-1 font-semibold" variant="secondary">
+                        <Badge
+                          className="rounded-sm bg-muted px-2 py-1 font-semibold"
+                          variant="secondary"
+                        >
                           {event.actorRole ?? "System"}
                         </Badge>
                       </TableCell>
-                      <TableCell>{event.action}</TableCell>
+                      <TableCell className="text-[13px]">
+                        {event.action}
+                      </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        <div className="leading-tight">
-                          <div className="font-medium">{event.entityLabel}</div>
+                        <div className="max-w-[220px] leading-tight">
+                          <div className="text-[14px] font-medium text-wrap wrap-normal">
+                            {event.entityLabel}
+                          </div>
                           <div className="text-xs text-muted-foreground">
                             {event.entityType}
                           </div>
@@ -219,7 +283,10 @@ export default function AuditPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
+                    <TableCell
+                      colSpan={7}
+                      className="py-8 text-center text-muted-foreground"
+                    >
                       No audit events found.
                     </TableCell>
                   </TableRow>

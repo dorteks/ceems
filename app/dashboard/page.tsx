@@ -34,6 +34,7 @@ import Link from "next/link";
 import { DayDisplay } from "@/components/dashboard/time-display";
 import { toast } from "sonner";
 import { Donut } from "@/components/dashboard/donut";
+import { useAuth } from "@/lib/auth/auth";
 
 // export const Route = createFileRoute("/")({
 //   head: () => ({
@@ -113,6 +114,8 @@ type DashboardData = {
 };
 
 export default function Dashboard() {
+  const { adminAccess } = useAuth();
+
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -187,16 +190,19 @@ export default function Dashboard() {
             >
               <RefreshCw className="size-4" /> Refresh
             </Button>
-            <Button
-              onClick={() =>
-                toast.message("Coming soon", {
-                  position: "top-right",
-                })
-              }
-              size="sm"
-            >
-              <Download className="size-4" /> Export snapshot
-            </Button>
+
+            {adminAccess && (
+              <Button
+                onClick={() =>
+                  toast.message("Coming soon", {
+                    position: "top-right",
+                  })
+                }
+                size="sm"
+              >
+                <Download className="size-4" /> Export snapshot
+              </Button>
+            )}
           </>
         }
       />

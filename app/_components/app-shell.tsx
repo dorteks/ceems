@@ -44,40 +44,58 @@ import { TimeDisplay } from "@/components/dashboard/time-display";
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/customers", label: "Customers", icon: Users },
-  { to: "/import", label: "Import & Export", icon: Upload },
+  {
+    to: "/import",
+    label: "Import & Export",
+    icon: Upload,
+    adminOnly: true,
+  },
   { to: "/enumeration", label: "Enumeration", icon: ClipboardList },
-  { to: "/network", label: "Network", icon: Network },
-  { to: "/map", label: "Map", icon: Map },
-  { to: "/audit", label: "Audit trail", icon: History },
-  { to: "/administration", label: "Administration", icon: Shield },
+  { to: "/network", label: "Network", icon: Network, adminOnly: true },
+  { to: "/map", label: "Map", icon: Map, adminOnly: true },
+  {
+    to: "/audit",
+    label: "Audit trail",
+    icon: History,
+    adminOnly: true,
+  },
+  {
+    to: "/administration",
+    label: "Administration",
+    icon: Shield,
+    adminOnly: true,
+  },
 ] as const;
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
+  const { adminAccess } = useAuth();
   const pathname = usePathname();
 
   return (
     <nav className="flex flex-col gap-1 p-3">
-      {nav.map((item) => {
-        const active =
-          pathname === item.to || pathname.startsWith(`${item.to}/`);
+      {nav
+        .filter((item) => !item.adminOnly || adminAccess)
+        .map((item) => {
+          const active =
+            pathname === item.to || pathname.startsWith(`${item.to}/`);
 
-        return (
-          <Link
-            key={item.to}
-            href={item.to}
-            onClick={onNavigate}
-            className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/80 transition-colors",
-              "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-              active &&
-                "bg-sidebar-accent text-sidebar-accent-foreground shadow-[inset_3px_0_0_0_var(--sidebar-primary)]",
-            )}
-          >
-            <item.icon className="size-4 shrink-0" />
-            {item.label}
-          </Link>
-        );
-      })}
+          return (
+            <Link
+              key={item.to}
+              href={item.to}
+              onClick={onNavigate}
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/80 transition-colors",
+                "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                active &&
+                  "bg-sidebar-accent text-sidebar-accent-foreground shadow-[inset_3px_0_0_0_var(--sidebar-primary)]",
+              )}
+            >
+              <item.icon className="size-4 shrink-0" />
+              {item.label}
+            </Link>
+          );
+        })}
     </nav>
   );
 }
