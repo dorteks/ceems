@@ -399,6 +399,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   Customer: 'Customer',
   User: 'User',
+  CustomerEnumeration: 'CustomerEnumeration',
   ImportJob: 'ImportJob',
   AuditEvent: 'AuditEvent'
 } as const
@@ -416,7 +417,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "customer" | "user" | "importJob" | "auditEvent"
+    modelProps: "customer" | "user" | "customerEnumeration" | "importJob" | "auditEvent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -565,6 +566,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserCountAggregateOutputType> | number
+        }
+      }
+    }
+    CustomerEnumeration: {
+      payload: Prisma.$CustomerEnumerationPayload<ExtArgs>
+      fields: Prisma.CustomerEnumerationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CustomerEnumerationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerEnumerationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CustomerEnumerationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerEnumerationPayload>
+        }
+        findFirst: {
+          args: Prisma.CustomerEnumerationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerEnumerationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CustomerEnumerationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerEnumerationPayload>
+        }
+        findMany: {
+          args: Prisma.CustomerEnumerationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerEnumerationPayload>[]
+        }
+        create: {
+          args: Prisma.CustomerEnumerationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerEnumerationPayload>
+        }
+        createMany: {
+          args: Prisma.CustomerEnumerationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CustomerEnumerationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerEnumerationPayload>[]
+        }
+        delete: {
+          args: Prisma.CustomerEnumerationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerEnumerationPayload>
+        }
+        update: {
+          args: Prisma.CustomerEnumerationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerEnumerationPayload>
+        }
+        deleteMany: {
+          args: Prisma.CustomerEnumerationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CustomerEnumerationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CustomerEnumerationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerEnumerationPayload>[]
+        }
+        upsert: {
+          args: Prisma.CustomerEnumerationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerEnumerationPayload>
+        }
+        aggregate: {
+          args: Prisma.CustomerEnumerationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCustomerEnumeration>
+        }
+        groupBy: {
+          args: Prisma.CustomerEnumerationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CustomerEnumerationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CustomerEnumerationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CustomerEnumerationCountAggregateOutputType> | number
         }
       }
     }
@@ -820,6 +895,22 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const CustomerEnumerationScalarFieldEnum = {
+  id: 'id',
+  customer_id: 'customer_id',
+  account_number: 'account_number',
+  meter_number: 'meter_number',
+  user_id: 'user_id',
+  user_name: 'user_name',
+  service_center: 'service_center',
+  enumerated_at: 'enumerated_at',
+  before_data: 'before_data',
+  after_data: 'after_data'
+} as const
+
+export type CustomerEnumerationScalarFieldEnum = (typeof CustomerEnumerationScalarFieldEnum)[keyof typeof CustomerEnumerationScalarFieldEnum]
 
 
 export const ImportJobScalarFieldEnum = {
@@ -1112,20 +1203,6 @@ export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
- * Reference to a field of type 'ImportJobStatus'
- */
-export type EnumImportJobStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ImportJobStatus'>
-    
-
-
-/**
- * Reference to a field of type 'ImportJobStatus[]'
- */
-export type ListEnumImportJobStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ImportJobStatus[]'>
-    
-
-
-/**
  * Reference to a field of type 'Json'
  */
 export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
@@ -1136,6 +1213,20 @@ export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'J
  * Reference to a field of type 'QueryMode'
  */
 export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+/**
+ * Reference to a field of type 'ImportJobStatus'
+ */
+export type EnumImportJobStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ImportJobStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'ImportJobStatus[]'
+ */
+export type ListEnumImportJobStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ImportJobStatus[]'>
     
 
 /**
@@ -1291,6 +1382,7 @@ export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaC
 export type GlobalOmitConfig = {
   customer?: Prisma.CustomerOmit
   user?: Prisma.UserOmit
+  customerEnumeration?: Prisma.CustomerEnumerationOmit
   importJob?: Prisma.ImportJobOmit
   auditEvent?: Prisma.AuditEventOmit
 }

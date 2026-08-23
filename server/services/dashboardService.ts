@@ -74,17 +74,13 @@ async function getCustomerStats() {
     SELECT
       COUNT(*)::int AS total_customers,
       COUNT(*) FILTER (
-        WHERE enumerator_id IS NOT NULL OR enumerator_name IS NOT NULL
+        WHERE updated_by IS NOT NULL
       )::int AS enumerated_customers,
       COUNT(*) FILTER (
         WHERE meter_number IS NULL OR meter_number = '' OR status = 'PENDING'
       )::int AS unmetered_customers,
       COUNT(*) FILTER (
-        WHERE status IN ('INACTIVE', 'DISCONNECTED')
-          OR phone IS NULL
-          OR email IS NULL
-          OR latitude IS NULL
-          OR longitude IS NULL
+        WHERE updated_by IS NULL
       )::int AS quality_issues,
       COUNT(*) FILTER (
         WHERE created_at >= date_trunc('month', CURRENT_DATE)
@@ -96,14 +92,16 @@ async function getCustomerStats() {
     FROM "Customer"
   `);
 
-  return row ?? {
-    total_customers: 0,
-    enumerated_customers: 0,
-    unmetered_customers: 0,
-    quality_issues: 0,
-    created_this_month: 0,
-    created_last_month: 0,
-  };
+  return (
+    row ?? {
+      total_customers: 0,
+      enumerated_customers: 0,
+      unmetered_customers: 0,
+      quality_issues: 0,
+      created_this_month: 0,
+      created_last_month: 0,
+    }
+  );
 }
 
 async function getTrend() {
@@ -178,9 +176,10 @@ async function getEnumerationBatches() {
   `);
 
   return rows.map((row) => {
-    const progress = row.records > 0
-      ? Math.min(100, Math.round((row.active_records / row.records) * 100))
-      : 0;
+    const progress =
+      row.records > 0
+        ? Math.min(100, Math.round((row.active_records / row.records) * 100))
+        : 0;
     const status =
       progress >= 95
         ? "Approved"
@@ -211,11 +210,13 @@ async function getEnumerationBatches() {
 
 function buildKpis(stats: CustomerStatsRow): DashboardKpi[] {
   const enumeratedPct = stats.total_customers
-    ? Math.round((stats.enumerated_customers / stats.total_customers) * 100)
-    : 0;
+    ? ((stats.enumerated_customers / stats.total_customers) * 100).toFixed(2)
+    : "0.00";
+
   const unmeteredPct = stats.total_customers
-    ? Math.round((stats.unmetered_customers / stats.total_customers) * 100)
-    : 0;
+    ? ((stats.unmetered_customers / stats.total_customers) * 100).toFixed(2)
+    : "0.00";
+
   const monthDelta = stats.created_this_month - stats.created_last_month;
 
   return [
@@ -238,9 +239,9 @@ function buildKpis(stats: CustomerStatsRow): DashboardKpi[] {
       tone: "warning",
     },
     {
-      label: "Data quality issues",
+      label: "Awaiting enumeration",
       value: stats.quality_issues.toLocaleString(),
-      delta: "Needs review",
+      delta: "Needs to be enumerated",
       tone: "destructive",
     },
   ];

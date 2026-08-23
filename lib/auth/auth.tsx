@@ -37,6 +37,11 @@ interface AuthValue {
   ) => Promise<{ ok: boolean; error?: string }>;
   canManageHub: (hub: string) => boolean;
   isSuperAdmin: boolean;
+  isDataManager: boolean;
+  isSupervisor: boolean;
+  isEnumerator: boolean;
+  isViewer: boolean;
+  adminAccess: boolean;
 }
 
 const AuthContext = createContext<AuthValue | null>(null);
@@ -93,6 +98,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value: AuthValue = useMemo(() => {
     const isSuperAdmin = user?.role === "Super Administrator";
+    const isDataManager = user?.role === "Data Manager";
+    const isSupervisor = user?.role === "Supervisor";
+    const isEnumerator = user?.role === "Enumerator";
+    const isViewer = user?.role === "Viewer";
+
+    const adminAccess = isSuperAdmin || isDataManager;
 
     return {
       ready,
@@ -100,6 +111,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       accounts,
       defaultPassword: DEFAULT_PASSWORD,
       isSuperAdmin,
+      isDataManager,
+      isSupervisor,
+      isEnumerator,
+      isViewer,
+      adminAccess,
       signIn: async (identifier, password) => {
         const response = await fetch("/api/auth/login", {
           method: "POST",

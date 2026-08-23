@@ -22,8 +22,21 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const page = parseInt(url.searchParams.get("page") || "1", 10);
     const size = parseInt(url.searchParams.get("size") || "50", 10);
+    const search = url.searchParams.get("q") || undefined;
+    const status = url.searchParams.get("status") || undefined;
+    const lga = url.searchParams.get("lga") || undefined;
+    const feederBand = url.searchParams.get("feeder_band") || undefined;
+    const state = url.searchParams.get("state") || undefined;
 
-    const result = await listCustomers({ page, size });
+    const result = await listCustomers({
+      page,
+      size,
+      search,
+      status,
+      lga,
+      feederBand,
+      state,
+    });
 
     return NextResponse.json(result, { status: 200 });
   } catch (error: unknown) {
@@ -53,53 +66,51 @@ export async function POST(req: Request) {
       );
     }
 
-    const created = await createCustomer({
-      account_number: body.account_number,
-      meter_number: body.meter_number,
-      surname: body.surname,
-      first_name: body.first_name,
-      other_name: body.other_name ?? null,
-      customer_type: body.customer_type ?? undefined,
+    const created = await createCustomer(
+      {
+        account_number: body.account_number,
+        meter_number: body.meter_number,
+        surname: body.surname,
+        first_name: body.first_name,
+        other_name: body.other_name ?? null,
+        customer_type: body.customer_type ?? undefined,
 
-      meter_type: body.meter_type ?? undefined,
-      meter_phase: body.meter_phase ?? undefined,
-      customer_category: body.customer_category ?? undefined,
-      nin: body.nin ?? null,
-      premise_type: body.premise_type ?? undefined,
+        meter_type: body.meter_type ?? undefined,
+        meter_phase: body.meter_phase ?? undefined,
+        customer_category: body.customer_category ?? undefined,
+        nin: body.nin ?? null,
+        premise_type: body.premise_type ?? undefined,
 
-      address: body.address ?? null,
-      city: body.city ?? null,
-      state: body.state ?? null,
-      lga: body.lga ?? null,
-      service_center: body.service_center ?? undefined,
-      service_code: body.service_code ?? undefined,
-      tariff: body.tariff ?? undefined,
-      longitude: body.longitude ?? null,
-      latitude: body.latitude ?? null,
+        address: body.address ?? null,
+        city: body.city ?? null,
+        state: body.state ?? null,
+        lga: body.lga ?? null,
+        service_center: body.service_center ?? undefined,
+        service_code: body.service_code ?? undefined,
+        tariff: body.tariff ?? undefined,
+        longitude: body.longitude ?? null,
+        latitude: body.latitude ?? null,
 
-      email: body.email ?? null,
-      phone: body.phone ?? null,
-      nature_of_business: body.nature_of_business ?? null,
+        email: body.email ?? null,
+        phone: body.phone ?? null,
+        nature_of_business: body.nature_of_business ?? null,
 
-      dss_id: body.dss_id ?? null,
-      dss_name: body.dss_name ?? null,
-      feeder_id: body.feeder_id ?? null,
-      feeder_name: body.feeder_name ?? null,
-      feeder_band: body.feeder_band ?? null,
-      status: body.status ?? null,
-      business_hub: body.business_hub ?? null,
-      region: body.region ?? null,
+        dss_id: body.dss_id ?? null,
+        dss_name: body.dss_name ?? null,
+        feeder_id: body.feeder_id ?? null,
+        feeder_name: body.feeder_name ?? null,
+        feeder_band: body.feeder_band ?? null,
+        status: body.status ?? null,
+        business_hub: body.business_hub ?? null,
+        region: body.region ?? null,
 
-      enumerator_name: body.enumerator_name ?? null,
-      enumerator_id: body.enumerator_id ?? null,
-      enumerator_phone_number: body.enumerator_phone_number ?? null,
-      remark: body.remark ?? null,
-
-      created_at: body.created_at ?? null,
-      updated_at: body.updated_at ?? null,
-      created_by: body.created_by ?? null,
-      updated_by: body.updated_by ?? null,
-    });
+        enumerator_name: body.enumerator_name ?? null,
+        enumerator_id: body.enumerator_id ?? null,
+        enumerator_phone_number: body.enumerator_phone_number ?? null,
+        remark: body.remark ?? null,
+      },
+      currentUser.name,
+    );
 
     await recordAuditEvent({
       actorName: currentUser.name,

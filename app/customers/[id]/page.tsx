@@ -26,8 +26,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { auditLog } from "@/app/data/ceems";
-
 type CustomerDetailRecord = {
   id: number;
   account_number: string;
@@ -66,6 +64,23 @@ type CustomerDetailRecord = {
   enumerator_phone_number: string | null;
   remark: string | null;
   created_at: string;
+  updated_at: string;
+  created_by: string;
+  updated_by: string;
+};
+
+type AuditEvent = {
+  id: number;
+  actorName: string;
+  actorUsername: string | null;
+  actorRole: string | null;
+  action: string;
+  entityType: string;
+  entityId: string | null;
+  entityLabel: string;
+  beforeValue: string | null;
+  afterValue: string | null;
+  occurredAt: string;
 };
 
 function Field({
@@ -102,6 +117,9 @@ export default function CustomerDetail() {
   const [customer, setCustomer] = useState<CustomerDetailRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [auditLoading, setAuditLoading] = useState(true);
+  const [auditError, setAuditError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -146,6 +164,60 @@ export default function CustomerDetail() {
     };
   }, [id]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchAuditEvents = async () => {
+      try {
+        setAuditLoading(true);
+        setAuditError(null);
+
+        const params = new URLSearchParams();
+        params.set("limit", "20");
+        params.set("entityType", "customer");
+        params.set("entityId", id);
+
+        const response = await fetch(`/api/audit?${params.toString()}`, {
+          credentials: "include",
+          signal: controller.signal,
+        });
+
+        const json = (await response.json().catch(() => null)) as {
+          events?: AuditEvent[];
+          error?: string;
+        } | null;
+
+        if (!response.ok || !json?.events) {
+          setAuditEvents([]);
+          setAuditError(json?.error ?? "Failed to load audit trail");
+          return;
+        }
+
+        setAuditEvents(json.events);
+      } catch (fetchError) {
+        if (
+          fetchError instanceof DOMException &&
+          fetchError.name === "AbortError"
+        ) {
+          return;
+        }
+
+        setAuditEvents([]);
+        setAuditError("Failed to load audit trail");
+      } finally {
+        if (!controller.signal.aborted) {
+          setAuditLoading(false);
+        }
+      }
+    };
+
+    void fetchAuditEvents();
+
+    return () => {
+      controller.abort();
+    };
+  }, [id]);
+
   if (loading) {
     return <div>Loading customer...</div>;
   }
@@ -175,12 +247,33 @@ export default function CustomerDetail() {
 
       <PageHeader
         title={title}
-        description={`Account ${c.account_number} · ${c.customer_type ?? "Unclassified"} · ${c.business_hub ?? "Unknown"} hub`}
+        description={
+          <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-4">
+            <span>
+              Account -{" "}
+              <span className="font-semibold text-foreground">
+                {c.account_number}
+              </span>
+            </span>
+
+            <span>
+              Meter -{" "}
+              <span className="font-semibold text-foreground">
+                {c.meter_number ?? "—"}
+              </span>
+            </span>
+
+            <span className="flex flex-row gap-2">
+              {c.customer_type ?? "Unclassified"} ·{" "}
+              {c.business_hub ?? "Unknown"} hub
+            </span>
+          </div>
+        }
         actions={
           <>
-            <Button variant="outline" size="sm">
+            {/* <Button variant="outline" size="sm">
               <Printer className="size-4" /> Print
-            </Button>
+            </Button> */}
             <Button size="sm" asChild>
               <Link href={`/customers/${id}/edit`}>
                 <Pencil className="size-4" /> Edit record
@@ -215,6 +308,7 @@ export default function CustomerDetail() {
                 value="customer"
                 className="grid gap-4 pt-4 sm:grid-cols-2 lg:grid-cols-3"
               >
+                <Field label="Account No." value={c.account_number} />
                 <Field label="Surname" value={c.surname} />
                 <Field label="First name" value={c.first_name} />
                 <Field label="Other name" value={c.other_name} />
@@ -293,33 +387,74 @@ export default function CustomerDetail() {
                       <TableRow>
                         <TableHead>Actor</TableHead>
                         <TableHead>Action</TableHead>
-                        <TableHead className="hidden sm:table-cell">
+                        {/* <TableHead className="hidden sm:table-cell">
                           From
                         </TableHead>
                         <TableHead className="hidden sm:table-cell">
                           To
-                        </TableHead>
+                        </TableHead> */}
                         <TableHead className="text-right">When</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {auditLog.map((a, i) => (
-                        <TableRow key={i}>
-                          <TableCell className="font-medium">
-                            {a.actor}
-                          </TableCell>
-                          <TableCell>{a.action}</TableCell>
-                          <TableCell className="hidden sm:table-cell">
-                            {a.from}
-                          </TableCell>
-                          <TableCell className="hidden sm:table-cell">
-                            {a.to}
-                          </TableCell>
-                          <TableCell className="text-right text-muted-foreground">
-                            {a.when}
+                      {auditLoading ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={5}
+                            className="py-8 text-center text-muted-foreground"
+                          >
+                            Loading customer audit trail...
                           </TableCell>
                         </TableRow>
-                      ))}
+                      ) : auditError ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={5}
+                            className="py-8 text-center text-muted-foreground"
+                          >
+                            {auditError}
+                          </TableCell>
+                        </TableRow>
+                      ) : auditEvents.length ? (
+                        auditEvents.map((event) => (
+                          <TableRow key={event.id}>
+                            <TableCell className="font-medium">
+                              <div className="leading-tight">
+                                <div>{event.actorName}</div>
+                                {event.actorUsername ? (
+                                  <div className="text-xs text-muted-foreground">
+                                    @{event.actorUsername}
+                                  </div>
+                                ) : null}
+                              </div>
+                            </TableCell>
+                            <TableCell>{event.action}</TableCell>
+                            {/* <TableCell className="hidden sm:table-cell">
+                              {event.beforeValue ?? "—"}
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              {event.afterValue ?? "—"}
+                            </TableCell> */}
+                            <TableCell className="text-right text-muted-foreground">
+                              {new Date(event.occurredAt).toLocaleString([], {
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell
+                            colSpan={5}
+                            className="py-8 text-center text-muted-foreground"
+                          >
+                            No customer audit events found.
+                          </TableCell>
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
                 </div>
@@ -342,7 +477,18 @@ export default function CustomerDetail() {
               <Field label="Remarks" value={c.remark} />
               <Field
                 label="Date created"
-                value={new Date(c.created_at).toLocaleDateString()}
+                value={new Date(c.created_at).toLocaleString([], {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              />
+              <Field label="Updated By" value={c.updated_by} />
+              <Field
+                label="Date updated"
+                value={new Date(c.updated_at).toLocaleString([], {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
               />
             </CardContent>
           </Card>
@@ -354,17 +500,20 @@ export default function CustomerDetail() {
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               {[
-                ["Account number format", "Pass"],
+                [
+                  "Account number format",
+                  c.account_number ? "Pass" : "Missing",
+                ],
                 [
                   "Meter number uniqueness",
                   c.meter_number ? "Pass" : "Missing",
                 ],
-                ["Phone format", "Pass"],
+                ["Phone format", c.phone ? "Pass" : "Missing"],
                 [
                   "Coordinates within hub",
                   c.status === "DISCONNECTED" ? "Failed" : "Pass",
                 ],
-                ["NIN present", "Pass"],
+                ["NIN present", c.nin ? "Pass" : "Missing"],
               ].map(([label, result]) => (
                 <div key={label} className="flex items-center justify-between">
                   <span className="text-muted-foreground">{label}</span>

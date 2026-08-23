@@ -157,6 +157,8 @@ model Customer {
   @@index([feeder_id])
   @@index([enumerator_id])
   @@index([status])
+
+  enumerations CustomerEnumeration[]
 }
 
 model User {
@@ -181,6 +183,30 @@ model User {
   @@index([hub])
   @@index([status])
   @@map("users")
+
+  enumerations CustomerEnumeration[]
+}
+
+model CustomerEnumeration {
+  id             Int          @id @default(autoincrement())
+  customer_id     Int
+  account_number  String
+  meter_number    String?
+  user_id        Int?
+  user_name      String
+  service_center ServiceCenter?
+  enumerated_at  DateTime     @default(now())
+  before_data    Json?
+  after_data     Json?
+
+  customer Customer @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([customer_id, enumerated_at])
+  @@index([enumerated_at])
+  @@index([service_center])
+  @@index([user_id])
+  @@map("customer_enumerations")
 }
 
 model ImportJob {

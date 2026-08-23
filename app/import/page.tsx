@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/table";
 import { PageHeader } from "../_components/app-shell";
 import { StatusBadge } from "../_components/status-badge";
+import { useAuth } from "@/lib/auth/auth";
 
 // export const Route = createFileRoute("/import")({
 //   head: () => ({
@@ -123,6 +124,17 @@ function formatImportTime(value: string) {
 }
 
 export default function ImportPage() {
+  const { adminAccess } = useAuth();
+
+  if (!adminAccess) {
+    return (
+      <PageHeader
+        title="Import & export"
+        description="You do not have access to manage data import and export."
+      />
+    );
+  }
+
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);

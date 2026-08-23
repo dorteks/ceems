@@ -48,31 +48,50 @@ function serializeEvent(row: AuditEventRow): AuditEventRecord {
   };
 }
 
-function buildWhereClause(search?: string) {
-  const term = search?.trim();
+function buildWhereClause(options?: {
+  search?: string;
+  entityType?: string;
+  entityId?: string | number;
+}) {
+  const clauses: Prisma.Sql[] = [];
+  const term = options?.search?.trim();
 
-  if (!term) return Prisma.empty;
+  if (options?.entityType) {
+    clauses.push(Prisma.sql`entity_type = ${options.entityType}`);
+  }
 
-  const like = `%${term}%`;
-  return Prisma.sql`
-    WHERE (
-      actor_name ILIKE ${like}
-      OR COALESCE(actor_username, '') ILIKE ${like}
-      OR action ILIKE ${like}
-      OR entity_label ILIKE ${like}
-      OR COALESCE(entity_id, '') ILIKE ${like}
-      OR COALESCE(before_value, '') ILIKE ${like}
-      OR COALESCE(after_value, '') ILIKE ${like}
-    )
-  `;
+  if (options?.entityId != null) {
+    clauses.push(Prisma.sql`entity_id = ${String(options.entityId)}`);
+  }
+
+  if (term) {
+    const like = `%${term}%`;
+    clauses.push(Prisma.sql`
+      (
+        actor_name ILIKE ${like}
+        OR COALESCE(actor_username, '') ILIKE ${like}
+        OR action ILIKE ${like}
+        OR entity_label ILIKE ${like}
+        OR COALESCE(entity_id, '') ILIKE ${like}
+        OR COALESCE(before_value, '') ILIKE ${like}
+        OR COALESCE(after_value, '') ILIKE ${like}
+      )
+    `);
+  }
+
+  if (!clauses.length) return Prisma.empty;
+
+  return Prisma.sql`WHERE ${Prisma.join(clauses, " AND ")}`;
 }
 
 export async function listAuditEvents(options?: {
   search?: string;
+  entityType?: string;
+  entityId?: string | number;
   limit?: number;
 }) {
   const limit = options?.limit ?? 100;
-  const whereClause = buildWhereClause(options?.search);
+  const whereClause = buildWhereClause(options);
 
   const rows = await prisma.$queryRaw<AuditEventRow[]>(Prisma.sql`
     SELECT
@@ -114,39 +133,42 @@ export async function recordAuditEvent(input: {
   metadata?: Record<string, unknown> | null;
   occurredAt?: Date;
 }) {
-  const occurredAt = input.occurredAt ?? new Date();
-  const metadataSql = input.metadata
-    ? Prisma.sql`${JSON.stringify(input.metadata)}::jsonb`
-    : Prisma.sql`NULL`;
+  return recordAuditEventWithClient(prisma, input);
+}
 
-  const [row] = await prisma.$queryRaw<Pick<AuditEventRow, "id">[]>(Prisma.sql`
-    INSERT INTO "audit_events" (
-      actor_name,
-      actor_username,
-      actor_role,
-      action,
-      entity_type,
-      entity_id,
-      entity_label,
-      before_value,
-      after_value,
-      metadata,
-      occurred_at
-    ) VALUES (
-      ${input.actorName},
-      ${input.actorUsername ?? null},
-      ${input.actorRole ?? null},
-      ${input.action},
-      ${input.entityType},
-      ${input.entityId == null ? null : String(input.entityId)},
-      ${input.entityLabel},
-      ${input.beforeValue ?? null},
-      ${input.afterValue ?? null},
-      ${metadataSql},
-      ${occurredAt}
-    )
-    RETURNING id
-  `);
+export async function recordAuditEventWithClient(
+  client: Pick<typeof prisma, "auditEvent">,
+  input: {
+    actorName: string;
+    actorUsername?: string | null;
+    actorRole?: string | null;
+    action: string;
+    entityType: string;
+    entityId?: string | number | null;
+    entityLabel: string;
+    beforeValue?: string | null;
+    afterValue?: string | null;
+    metadata?: Record<string, unknown> | null;
+    occurredAt?: Date;
+  },
+) {
+  const created = await client.auditEvent.create({
+    data: {
+      actor_name: input.actorName,
+      actor_username: input.actorUsername ?? null,
+      actor_role: input.actorRole ?? null,
+      action: input.action,
+      entity_type: input.entityType,
+      entity_id: input.entityId == null ? null : String(input.entityId),
+      entity_label: input.entityLabel,
+      before_value: input.beforeValue ?? null,
+      after_value: input.afterValue ?? null,
+      metadata: input.metadata
+        ? (input.metadata as Prisma.InputJsonValue)
+        : undefined,
+      occurred_at: input.occurredAt ?? new Date(),
+    },
+  });
 
-  return row?.id ?? null;
+  return created.id;
 }

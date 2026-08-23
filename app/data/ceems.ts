@@ -204,7 +204,7 @@ export const kpis = [
     tone: "warning" as const,
   },
   {
-    label: "Data quality issues",
+    label: "Awaiting enumeration",
     value: "4,127",
     delta: "1,204 duplicates",
     tone: "destructive" as const,
@@ -429,8 +429,17 @@ export const lgaOptions = ["All LGAs", ...lgas];
 export const statusOptions = [
   "All statuses",
   "Active",
-  "Pending",
   "Inactive",
-  "Flagged",
+  "Pending",
+  "Suspended",
+  "Disconnected",
 ];
 export const feederOptions = ["All feeders", ...feeders];
+export const feederBands = [
+  "All bands",
+  "Band A",
+  "Band B",
+  "Band C",
+  "Band D",
+  "Band E",
+] as const;

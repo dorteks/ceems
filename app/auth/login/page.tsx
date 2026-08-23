@@ -75,20 +75,22 @@ export default function LoginPage() {
               className="space-y-6"
               onSubmit={async (e) => {
                 e.preventDefault();
+                setError(null);
                 const res = await signIn(username, password);
+
                 if (!res.ok) {
                   setError(res.error ?? "Unable to sign in.");
                   return;
                 }
-                setError(null);
                 router.push(res.mustChangePassword ? "/account" : "/dashboard");
               }}
             >
               {error ? (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
+                <div className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3">
+                  <span className="text-sm text-destructive">{error}</span>
+                </div>
               ) : null}
+
               <div className="space-y-2">
                 <Label htmlFor="username">Username</Label>
                 <Input
@@ -101,6 +103,7 @@ export default function LoginPage() {
                   required
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
@@ -112,6 +115,7 @@ export default function LoginPage() {
                   required
                 />
               </div>
+
               <Button type="submit" className="w-full">
                 <LogIn className="size-4" /> Sign in
               </Button>
