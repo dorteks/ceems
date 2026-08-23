@@ -47,22 +47,32 @@ type CustomerSnapshotSource = {
 
 export type CustomerEnumerationRecord = {
   id: number;
+
   customerId: number;
+  accountNumber: string;
+  meterNumber: string | null;
+
   userId: number | null;
   userName: string;
   serviceCenter: ServiceCenterValue | null;
   enumeratedAt: string;
+
   beforeData: Record<string, unknown> | null;
   afterData: Record<string, unknown> | null;
 };
 
 type CustomerEnumerationRow = {
   id: number;
+
   customer_id: number;
+  account_number: string;
+  meter_number: string | null;
+
   user_id: number | null;
   user_name: string;
   service_center: ServiceCenterValue | null;
   enumerated_at: Date;
+
   before_data: Prisma.JsonValue | null;
   after_data: Prisma.JsonValue | null;
 };
@@ -80,12 +90,18 @@ function serializeEnumeration(
 ): CustomerEnumerationRecord {
   return {
     id: row.id,
+
     customerId: row.customer_id,
+    accountNumber: row.account_number,
+    meterNumber: row.meter_number,
+
     userId: row.user_id,
     userName: row.user_name,
     serviceCenter: row.service_center,
     enumeratedAt: row.enumerated_at.toISOString(),
+
     beforeData: (row.before_data as Record<string, unknown> | null) ?? null,
+
     afterData: (row.after_data as Record<string, unknown> | null) ?? null,
   };
 }
@@ -119,18 +135,25 @@ export async function recordCustomerEnumeration(
     userId?: number | null;
     userName: string;
     serviceCenter?: ServiceCenterValue | null;
+
     beforeData: CustomerSnapshotSource;
     afterData: CustomerSnapshotSource;
+
     enumeratedAt?: Date;
   },
 ) {
   const created = await client.customerEnumeration.create({
     data: {
       customer_id: input.customerId,
+
+      account_number: input.beforeData.account_number,
+      meter_number: input.beforeData.meter_number,
+
       user_id: input.userId ?? null,
       user_name: input.userName,
       service_center: input.serviceCenter ?? null,
       enumerated_at: input.enumeratedAt ?? new Date(),
+
       before_data: serializeSnapshot(input.beforeData),
       after_data: serializeSnapshot(input.afterData),
     },
@@ -184,7 +207,9 @@ export async function getEnumerationsByDate(from: Date, to: Date) {
 }
 
 export async function getEnumerationsByServiceCenter(serviceCenter: string) {
-  return listEnumerations({ serviceCenter: serviceCenter as ServiceCenterValue });
+  return listEnumerations({
+    serviceCenter: serviceCenter as ServiceCenterValue,
+  });
 }
 
 export async function getEnumerationStats(options?: {

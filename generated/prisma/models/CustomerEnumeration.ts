@@ -41,6 +41,8 @@ export type CustomerEnumerationSumAggregateOutputType = {
 export type CustomerEnumerationMinAggregateOutputType = {
   id: number | null
   customer_id: number | null
+  account_number: string | null
+  meter_number: string | null
   user_id: number | null
   user_name: string | null
   service_center: $Enums.ServiceCenter | null
@@ -50,6 +52,8 @@ export type CustomerEnumerationMinAggregateOutputType = {
 export type CustomerEnumerationMaxAggregateOutputType = {
   id: number | null
   customer_id: number | null
+  account_number: string | null
+  meter_number: string | null
   user_id: number | null
   user_name: string | null
   service_center: $Enums.ServiceCenter | null
@@ -59,6 +63,8 @@ export type CustomerEnumerationMaxAggregateOutputType = {
 export type CustomerEnumerationCountAggregateOutputType = {
   id: number
   customer_id: number
+  account_number: number
+  meter_number: number
   user_id: number
   user_name: number
   service_center: number
@@ -84,6 +90,8 @@ export type CustomerEnumerationSumAggregateInputType = {
 export type CustomerEnumerationMinAggregateInputType = {
   id?: true
   customer_id?: true
+  account_number?: true
+  meter_number?: true
   user_id?: true
   user_name?: true
   service_center?: true
@@ -93,6 +101,8 @@ export type CustomerEnumerationMinAggregateInputType = {
 export type CustomerEnumerationMaxAggregateInputType = {
   id?: true
   customer_id?: true
+  account_number?: true
+  meter_number?: true
   user_id?: true
   user_name?: true
   service_center?: true
@@ -102,6 +112,8 @@ export type CustomerEnumerationMaxAggregateInputType = {
 export type CustomerEnumerationCountAggregateInputType = {
   id?: true
   customer_id?: true
+  account_number?: true
+  meter_number?: true
   user_id?: true
   user_name?: true
   service_center?: true
@@ -200,6 +212,8 @@ export type CustomerEnumerationGroupByArgs<ExtArgs extends runtime.Types.Extensi
 export type CustomerEnumerationGroupByOutputType = {
   id: number
   customer_id: number
+  account_number: string
+  meter_number: string | null
   user_id: number | null
   user_name: string
   service_center: $Enums.ServiceCenter | null
@@ -234,6 +248,8 @@ export type CustomerEnumerationWhereInput = {
   NOT?: Prisma.CustomerEnumerationWhereInput | Prisma.CustomerEnumerationWhereInput[]
   id?: Prisma.IntFilter<"CustomerEnumeration"> | number
   customer_id?: Prisma.IntFilter<"CustomerEnumeration"> | number
+  account_number?: Prisma.StringFilter<"CustomerEnumeration"> | string
+  meter_number?: Prisma.StringNullableFilter<"CustomerEnumeration"> | string | null
   user_id?: Prisma.IntNullableFilter<"CustomerEnumeration"> | number | null
   user_name?: Prisma.StringFilter<"CustomerEnumeration"> | string
   service_center?: Prisma.EnumServiceCenterNullableFilter<"CustomerEnumeration"> | $Enums.ServiceCenter | null
@@ -247,6 +263,8 @@ export type CustomerEnumerationWhereInput = {
 export type CustomerEnumerationOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   customer_id?: Prisma.SortOrder
+  account_number?: Prisma.SortOrder
+  meter_number?: Prisma.SortOrderInput | Prisma.SortOrder
   user_id?: Prisma.SortOrderInput | Prisma.SortOrder
   user_name?: Prisma.SortOrder
   service_center?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -263,6 +281,8 @@ export type CustomerEnumerationWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.CustomerEnumerationWhereInput[]
   NOT?: Prisma.CustomerEnumerationWhereInput | Prisma.CustomerEnumerationWhereInput[]
   customer_id?: Prisma.IntFilter<"CustomerEnumeration"> | number
+  account_number?: Prisma.StringFilter<"CustomerEnumeration"> | string
+  meter_number?: Prisma.StringNullableFilter<"CustomerEnumeration"> | string | null
   user_id?: Prisma.IntNullableFilter<"CustomerEnumeration"> | number | null
   user_name?: Prisma.StringFilter<"CustomerEnumeration"> | string
   service_center?: Prisma.EnumServiceCenterNullableFilter<"CustomerEnumeration"> | $Enums.ServiceCenter | null
@@ -276,6 +296,8 @@ export type CustomerEnumerationWhereUniqueInput = Prisma.AtLeast<{
 export type CustomerEnumerationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   customer_id?: Prisma.SortOrder
+  account_number?: Prisma.SortOrder
+  meter_number?: Prisma.SortOrderInput | Prisma.SortOrder
   user_id?: Prisma.SortOrderInput | Prisma.SortOrder
   user_name?: Prisma.SortOrder
   service_center?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -295,6 +317,8 @@ export type CustomerEnumerationScalarWhereWithAggregatesInput = {
   NOT?: Prisma.CustomerEnumerationScalarWhereWithAggregatesInput | Prisma.CustomerEnumerationScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"CustomerEnumeration"> | number
   customer_id?: Prisma.IntWithAggregatesFilter<"CustomerEnumeration"> | number
+  account_number?: Prisma.StringWithAggregatesFilter<"CustomerEnumeration"> | string
+  meter_number?: Prisma.StringNullableWithAggregatesFilter<"CustomerEnumeration"> | string | null
   user_id?: Prisma.IntNullableWithAggregatesFilter<"CustomerEnumeration"> | number | null
   user_name?: Prisma.StringWithAggregatesFilter<"CustomerEnumeration"> | string
   service_center?: Prisma.EnumServiceCenterNullableWithAggregatesFilter<"CustomerEnumeration"> | $Enums.ServiceCenter | null
@@ -304,6 +328,8 @@ export type CustomerEnumerationScalarWhereWithAggregatesInput = {
 }
 
 export type CustomerEnumerationCreateInput = {
+  account_number: string
+  meter_number?: string | null
   user_name: string
   service_center?: $Enums.ServiceCenter | null
   enumerated_at?: Date | string
@@ -316,6 +342,8 @@ export type CustomerEnumerationCreateInput = {
 export type CustomerEnumerationUncheckedCreateInput = {
   id?: number
   customer_id: number
+  account_number: string
+  meter_number?: string | null
   user_id?: number | null
   user_name: string
   service_center?: $Enums.ServiceCenter | null
@@ -325,6 +353,8 @@ export type CustomerEnumerationUncheckedCreateInput = {
 }
 
 export type CustomerEnumerationUpdateInput = {
+  account_number?: Prisma.StringFieldUpdateOperationsInput | string
+  meter_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user_name?: Prisma.StringFieldUpdateOperationsInput | string
   service_center?: Prisma.NullableEnumServiceCenterFieldUpdateOperationsInput | $Enums.ServiceCenter | null
   enumerated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -337,6 +367,8 @@ export type CustomerEnumerationUpdateInput = {
 export type CustomerEnumerationUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   customer_id?: Prisma.IntFieldUpdateOperationsInput | number
+  account_number?: Prisma.StringFieldUpdateOperationsInput | string
+  meter_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   user_name?: Prisma.StringFieldUpdateOperationsInput | string
   service_center?: Prisma.NullableEnumServiceCenterFieldUpdateOperationsInput | $Enums.ServiceCenter | null
@@ -348,6 +380,8 @@ export type CustomerEnumerationUncheckedUpdateInput = {
 export type CustomerEnumerationCreateManyInput = {
   id?: number
   customer_id: number
+  account_number: string
+  meter_number?: string | null
   user_id?: number | null
   user_name: string
   service_center?: $Enums.ServiceCenter | null
@@ -357,6 +391,8 @@ export type CustomerEnumerationCreateManyInput = {
 }
 
 export type CustomerEnumerationUpdateManyMutationInput = {
+  account_number?: Prisma.StringFieldUpdateOperationsInput | string
+  meter_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user_name?: Prisma.StringFieldUpdateOperationsInput | string
   service_center?: Prisma.NullableEnumServiceCenterFieldUpdateOperationsInput | $Enums.ServiceCenter | null
   enumerated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -367,6 +403,8 @@ export type CustomerEnumerationUpdateManyMutationInput = {
 export type CustomerEnumerationUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   customer_id?: Prisma.IntFieldUpdateOperationsInput | number
+  account_number?: Prisma.StringFieldUpdateOperationsInput | string
+  meter_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   user_name?: Prisma.StringFieldUpdateOperationsInput | string
   service_center?: Prisma.NullableEnumServiceCenterFieldUpdateOperationsInput | $Enums.ServiceCenter | null
@@ -388,6 +426,8 @@ export type CustomerEnumerationOrderByRelationAggregateInput = {
 export type CustomerEnumerationCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   customer_id?: Prisma.SortOrder
+  account_number?: Prisma.SortOrder
+  meter_number?: Prisma.SortOrder
   user_id?: Prisma.SortOrder
   user_name?: Prisma.SortOrder
   service_center?: Prisma.SortOrder
@@ -405,6 +445,8 @@ export type CustomerEnumerationAvgOrderByAggregateInput = {
 export type CustomerEnumerationMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   customer_id?: Prisma.SortOrder
+  account_number?: Prisma.SortOrder
+  meter_number?: Prisma.SortOrder
   user_id?: Prisma.SortOrder
   user_name?: Prisma.SortOrder
   service_center?: Prisma.SortOrder
@@ -414,6 +456,8 @@ export type CustomerEnumerationMaxOrderByAggregateInput = {
 export type CustomerEnumerationMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   customer_id?: Prisma.SortOrder
+  account_number?: Prisma.SortOrder
+  meter_number?: Prisma.SortOrder
   user_id?: Prisma.SortOrder
   user_name?: Prisma.SortOrder
   service_center?: Prisma.SortOrder
@@ -519,6 +563,8 @@ export type NullableIntFieldUpdateOperationsInput = {
 }
 
 export type CustomerEnumerationCreateWithoutCustomerInput = {
+  account_number: string
+  meter_number?: string | null
   user_name: string
   service_center?: $Enums.ServiceCenter | null
   enumerated_at?: Date | string
@@ -529,6 +575,8 @@ export type CustomerEnumerationCreateWithoutCustomerInput = {
 
 export type CustomerEnumerationUncheckedCreateWithoutCustomerInput = {
   id?: number
+  account_number: string
+  meter_number?: string | null
   user_id?: number | null
   user_name: string
   service_center?: $Enums.ServiceCenter | null
@@ -569,6 +617,8 @@ export type CustomerEnumerationScalarWhereInput = {
   NOT?: Prisma.CustomerEnumerationScalarWhereInput | Prisma.CustomerEnumerationScalarWhereInput[]
   id?: Prisma.IntFilter<"CustomerEnumeration"> | number
   customer_id?: Prisma.IntFilter<"CustomerEnumeration"> | number
+  account_number?: Prisma.StringFilter<"CustomerEnumeration"> | string
+  meter_number?: Prisma.StringNullableFilter<"CustomerEnumeration"> | string | null
   user_id?: Prisma.IntNullableFilter<"CustomerEnumeration"> | number | null
   user_name?: Prisma.StringFilter<"CustomerEnumeration"> | string
   service_center?: Prisma.EnumServiceCenterNullableFilter<"CustomerEnumeration"> | $Enums.ServiceCenter | null
@@ -578,6 +628,8 @@ export type CustomerEnumerationScalarWhereInput = {
 }
 
 export type CustomerEnumerationCreateWithoutUserInput = {
+  account_number: string
+  meter_number?: string | null
   user_name: string
   service_center?: $Enums.ServiceCenter | null
   enumerated_at?: Date | string
@@ -589,6 +641,8 @@ export type CustomerEnumerationCreateWithoutUserInput = {
 export type CustomerEnumerationUncheckedCreateWithoutUserInput = {
   id?: number
   customer_id: number
+  account_number: string
+  meter_number?: string | null
   user_name: string
   service_center?: $Enums.ServiceCenter | null
   enumerated_at?: Date | string
@@ -624,6 +678,8 @@ export type CustomerEnumerationUpdateManyWithWhereWithoutUserInput = {
 
 export type CustomerEnumerationCreateManyCustomerInput = {
   id?: number
+  account_number: string
+  meter_number?: string | null
   user_id?: number | null
   user_name: string
   service_center?: $Enums.ServiceCenter | null
@@ -633,6 +689,8 @@ export type CustomerEnumerationCreateManyCustomerInput = {
 }
 
 export type CustomerEnumerationUpdateWithoutCustomerInput = {
+  account_number?: Prisma.StringFieldUpdateOperationsInput | string
+  meter_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user_name?: Prisma.StringFieldUpdateOperationsInput | string
   service_center?: Prisma.NullableEnumServiceCenterFieldUpdateOperationsInput | $Enums.ServiceCenter | null
   enumerated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -643,6 +701,8 @@ export type CustomerEnumerationUpdateWithoutCustomerInput = {
 
 export type CustomerEnumerationUncheckedUpdateWithoutCustomerInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  account_number?: Prisma.StringFieldUpdateOperationsInput | string
+  meter_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   user_name?: Prisma.StringFieldUpdateOperationsInput | string
   service_center?: Prisma.NullableEnumServiceCenterFieldUpdateOperationsInput | $Enums.ServiceCenter | null
@@ -653,6 +713,8 @@ export type CustomerEnumerationUncheckedUpdateWithoutCustomerInput = {
 
 export type CustomerEnumerationUncheckedUpdateManyWithoutCustomerInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  account_number?: Prisma.StringFieldUpdateOperationsInput | string
+  meter_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   user_name?: Prisma.StringFieldUpdateOperationsInput | string
   service_center?: Prisma.NullableEnumServiceCenterFieldUpdateOperationsInput | $Enums.ServiceCenter | null
@@ -664,6 +726,8 @@ export type CustomerEnumerationUncheckedUpdateManyWithoutCustomerInput = {
 export type CustomerEnumerationCreateManyUserInput = {
   id?: number
   customer_id: number
+  account_number: string
+  meter_number?: string | null
   user_name: string
   service_center?: $Enums.ServiceCenter | null
   enumerated_at?: Date | string
@@ -672,6 +736,8 @@ export type CustomerEnumerationCreateManyUserInput = {
 }
 
 export type CustomerEnumerationUpdateWithoutUserInput = {
+  account_number?: Prisma.StringFieldUpdateOperationsInput | string
+  meter_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user_name?: Prisma.StringFieldUpdateOperationsInput | string
   service_center?: Prisma.NullableEnumServiceCenterFieldUpdateOperationsInput | $Enums.ServiceCenter | null
   enumerated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -683,6 +749,8 @@ export type CustomerEnumerationUpdateWithoutUserInput = {
 export type CustomerEnumerationUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   customer_id?: Prisma.IntFieldUpdateOperationsInput | number
+  account_number?: Prisma.StringFieldUpdateOperationsInput | string
+  meter_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user_name?: Prisma.StringFieldUpdateOperationsInput | string
   service_center?: Prisma.NullableEnumServiceCenterFieldUpdateOperationsInput | $Enums.ServiceCenter | null
   enumerated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -693,6 +761,8 @@ export type CustomerEnumerationUncheckedUpdateWithoutUserInput = {
 export type CustomerEnumerationUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   customer_id?: Prisma.IntFieldUpdateOperationsInput | number
+  account_number?: Prisma.StringFieldUpdateOperationsInput | string
+  meter_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user_name?: Prisma.StringFieldUpdateOperationsInput | string
   service_center?: Prisma.NullableEnumServiceCenterFieldUpdateOperationsInput | $Enums.ServiceCenter | null
   enumerated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -705,6 +775,8 @@ export type CustomerEnumerationUncheckedUpdateManyWithoutUserInput = {
 export type CustomerEnumerationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   customer_id?: boolean
+  account_number?: boolean
+  meter_number?: boolean
   user_id?: boolean
   user_name?: boolean
   service_center?: boolean
@@ -718,6 +790,8 @@ export type CustomerEnumerationSelect<ExtArgs extends runtime.Types.Extensions.I
 export type CustomerEnumerationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   customer_id?: boolean
+  account_number?: boolean
+  meter_number?: boolean
   user_id?: boolean
   user_name?: boolean
   service_center?: boolean
@@ -731,6 +805,8 @@ export type CustomerEnumerationSelectCreateManyAndReturn<ExtArgs extends runtime
 export type CustomerEnumerationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   customer_id?: boolean
+  account_number?: boolean
+  meter_number?: boolean
   user_id?: boolean
   user_name?: boolean
   service_center?: boolean
@@ -744,6 +820,8 @@ export type CustomerEnumerationSelectUpdateManyAndReturn<ExtArgs extends runtime
 export type CustomerEnumerationSelectScalar = {
   id?: boolean
   customer_id?: boolean
+  account_number?: boolean
+  meter_number?: boolean
   user_id?: boolean
   user_name?: boolean
   service_center?: boolean
@@ -752,7 +830,7 @@ export type CustomerEnumerationSelectScalar = {
   after_data?: boolean
 }
 
-export type CustomerEnumerationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "customer_id" | "user_id" | "user_name" | "service_center" | "enumerated_at" | "before_data" | "after_data", ExtArgs["result"]["customerEnumeration"]>
+export type CustomerEnumerationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "customer_id" | "account_number" | "meter_number" | "user_id" | "user_name" | "service_center" | "enumerated_at" | "before_data" | "after_data", ExtArgs["result"]["customerEnumeration"]>
 export type CustomerEnumerationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   customer?: boolean | Prisma.CustomerDefaultArgs<ExtArgs>
   user?: boolean | Prisma.CustomerEnumeration$userArgs<ExtArgs>
@@ -775,6 +853,8 @@ export type $CustomerEnumerationPayload<ExtArgs extends runtime.Types.Extensions
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     customer_id: number
+    account_number: string
+    meter_number: string | null
     user_id: number | null
     user_name: string
     service_center: $Enums.ServiceCenter | null
@@ -1208,6 +1288,8 @@ export interface Prisma__CustomerEnumerationClient<T, Null = never, ExtArgs exte
 export interface CustomerEnumerationFieldRefs {
   readonly id: Prisma.FieldRef<"CustomerEnumeration", 'Int'>
   readonly customer_id: Prisma.FieldRef<"CustomerEnumeration", 'Int'>
+  readonly account_number: Prisma.FieldRef<"CustomerEnumeration", 'String'>
+  readonly meter_number: Prisma.FieldRef<"CustomerEnumeration", 'String'>
   readonly user_id: Prisma.FieldRef<"CustomerEnumeration", 'Int'>
   readonly user_name: Prisma.FieldRef<"CustomerEnumeration", 'String'>
   readonly service_center: Prisma.FieldRef<"CustomerEnumeration", 'ServiceCenter'>

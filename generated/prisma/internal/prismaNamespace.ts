@@ -900,6 +900,8 @@ export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof User
 export const CustomerEnumerationScalarFieldEnum = {
   id: 'id',
   customer_id: 'customer_id',
+  account_number: 'account_number',
+  meter_number: 'meter_number',
   user_id: 'user_id',
   user_name: 'user_name',
   service_center: 'service_center',

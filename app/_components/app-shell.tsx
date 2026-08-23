@@ -41,7 +41,14 @@ import {
 import { useAuth } from "@/lib/auth/auth";
 import { TimeDisplay } from "@/components/dashboard/time-display";
 
-const nav = [
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  adminOnly?: boolean;
+};
+
+const nav: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/customers", label: "Customers", icon: Users },
   {

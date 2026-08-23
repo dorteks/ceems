@@ -44,6 +44,8 @@ import { useAuth } from "@/lib/auth/auth";
 type EnumerationItem = {
   id: number;
   customerId: number;
+  accountNumber: string | null;
+  meterNumber: string | null;
   userId: number | null;
   userName: string;
   serviceCenter: ServiceCenterValue | null;
@@ -440,6 +442,7 @@ export default function EnumerationPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Customer</TableHead>
+                      <TableHead>Account & Meter no.</TableHead>
                       <TableHead>User</TableHead>
                       <TableHead>Service center</TableHead>
                       <TableHead>Updated</TableHead>
@@ -470,6 +473,14 @@ export default function EnumerationPage() {
                         <TableRow key={item.id}>
                           <TableCell className="font-medium">
                             #{item.customerId}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex flex-col gap-0.5">
+                              <span>{item.accountNumber}</span>
+                              <span className="text-xs font-normal text-muted-foreground">
+                                {item.meterNumber ?? "No meter number"}
+                              </span>
+                            </div>
                           </TableCell>
                           <TableCell>
                             {item.userName || "Unknown user"}
@@ -520,11 +531,29 @@ export default function EnumerationPage() {
                         <p className="font-medium">
                           Customer #{item.customerId}
                         </p>
+
+                        <div className="flex flex-col gap-1 text-sm text-foreground sm:flex-row sm:items-center sm:gap-4">
+                          <p>
+                            Account:{" "}
+                            <span className="font-semibold">
+                              {item.accountNumber}
+                            </span>
+                          </p>
+
+                          <p>
+                            Meter:{" "}
+                            <span className="font-semibold">
+                              {item.meterNumber ?? "—"}
+                            </span>
+                          </p>
+                        </div>
+
                         <p className="text-sm text-muted-foreground">
                           {item.userName} ·{" "}
                           {formatServiceCenter(item.serviceCenter)}
                         </p>
                       </div>
+
                       <span className="text-xs text-muted-foreground">
                         {formatDateTime(item.enumeratedAt)}
                       </span>

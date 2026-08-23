@@ -26,10 +26,14 @@ export async function GET(req: Request) {
 
     const url = new URL(req.url);
     const search = url.searchParams.get("q") || undefined;
+    const entityType = url.searchParams.get("entityType") || undefined;
+    const entityId = url.searchParams.get("entityId") || undefined;
     const limit = Number(url.searchParams.get("limit") || "100");
 
     const events = await listAuditEvents({
       search,
+      entityType,
+      entityId,
       limit: Number.isFinite(limit) && limit > 0 ? limit : 100,
     });
 
