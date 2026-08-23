@@ -18,6 +18,7 @@ export const ServiceCenter = {
   KELEBE_2: 'KELEBE_2',
   OGO_OLUWA: 'OGO_OLUWA',
   OKE_FIA: 'OKE_FIA',
+  OKEFIA: 'OKEFIA',
   OSOGBO_1: 'OSOGBO_1',
   OSOGBO_2: 'OSOGBO_2',
   OTA_EFUN: 'OTA_EFUN'
