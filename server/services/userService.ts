@@ -146,6 +146,26 @@ export async function getUserByLogin(identifier: string) {
   return user;
 }
 
+async function getUserForReset(identifier: number | string) {
+  if (typeof identifier === "number") {
+    return prisma.user.findUnique({ where: { id: identifier } });
+  }
+
+  const trimmed = identifier.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  const byId = Number(trimmed);
+  if (Number.isInteger(byId) && String(byId) === trimmed) {
+    const userById = await prisma.user.findUnique({ where: { id: byId } });
+    if (userById) return userById;
+  }
+
+  return getUserByLogin(trimmed);
+}
+
 export async function authenticateUser(identifier: string, password: string) {
   const user = await getUserByLogin(identifier);
 
@@ -273,6 +293,34 @@ export async function changePassword(
   return {
     ok: true as const,
     user: serializeUser(updated),
+  };
+}
+
+export async function resetUserPassword(
+  identifier: number | string,
+  adminUsername: string | null,
+) {
+  const user = await getUserForReset(identifier);
+
+  if (!user) {
+    return { ok: false as const, error: "User not found." };
+  }
+
+  const password = generateTemporaryPassword();
+
+  const updated = await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      password_hash: generatePasswordHash(password),
+      must_change_password: true,
+      updated_by: adminUsername ?? null,
+    },
+  });
+
+  return {
+    ok: true as const,
+    user: serializeUser(updated),
+    generatedPassword: password,
   };
 }
 
