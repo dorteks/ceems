@@ -99,7 +99,7 @@ model Customer {
   surname    String
   first_name String
   other_name String?
-  nin        String? @unique
+  nin        String? 
 
   // Customer classification
   customer_type     CustomerType?
@@ -120,7 +120,7 @@ model Customer {
   latitude       Float?
 
   // Contact
-  email String? @unique
+  email String?
   phone String?
 
   // Business
