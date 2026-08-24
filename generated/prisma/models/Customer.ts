@@ -555,14 +555,13 @@ export type CustomerWhereUniqueInput = Prisma.AtLeast<{
   id?: number
   account_number?: string
   meter_number?: string
-  nin?: string
-  email?: string
   AND?: Prisma.CustomerWhereInput | Prisma.CustomerWhereInput[]
   OR?: Prisma.CustomerWhereInput[]
   NOT?: Prisma.CustomerWhereInput | Prisma.CustomerWhereInput[]
   surname?: Prisma.StringFilter<"Customer"> | string
   first_name?: Prisma.StringFilter<"Customer"> | string
   other_name?: Prisma.StringNullableFilter<"Customer"> | string | null
+  nin?: Prisma.StringNullableFilter<"Customer"> | string | null
   customer_type?: Prisma.EnumCustomerTypeNullableFilter<"Customer"> | $Enums.CustomerType | null
   customer_category?: Prisma.EnumCustomerCategoryNullableFilter<"Customer"> | $Enums.CustomerCategory | null
   premise_type?: Prisma.EnumPremiseTypeNullableFilter<"Customer"> | $Enums.PremiseType | null
@@ -577,6 +576,7 @@ export type CustomerWhereUniqueInput = Prisma.AtLeast<{
   tariff?: Prisma.StringNullableFilter<"Customer"> | string | null
   longitude?: Prisma.FloatNullableFilter<"Customer"> | number | null
   latitude?: Prisma.FloatNullableFilter<"Customer"> | number | null
+  email?: Prisma.StringNullableFilter<"Customer"> | string | null
   phone?: Prisma.StringNullableFilter<"Customer"> | string | null
   nature_of_business?: Prisma.StringNullableFilter<"Customer"> | string | null
   dss_id?: Prisma.StringNullableFilter<"Customer"> | string | null
@@ -596,7 +596,7 @@ export type CustomerWhereUniqueInput = Prisma.AtLeast<{
   created_by?: Prisma.StringNullableFilter<"Customer"> | string | null
   updated_by?: Prisma.StringNullableFilter<"Customer"> | string | null
   enumerations?: Prisma.CustomerEnumerationListRelationFilter
-}, "id" | "account_number" | "meter_number" | "nin" | "email">
+}, "id" | "account_number" | "meter_number">
 
 export type CustomerOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
