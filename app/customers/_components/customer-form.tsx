@@ -133,6 +133,7 @@ export function CustomerForm({
 
     try {
       const payload = buildCustomerPayload(form);
+
       const response = await fetch(
         mode === "edit" && customerId
           ? `/api/customers/${customerId}`
@@ -157,9 +158,14 @@ export function CustomerForm({
       toast.success(mode === "edit" ? "Customer updated" : "Customer created");
 
       router.push(mode === "edit" && customerId ? returnHref : "/customers");
+
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      const message =
+        err instanceof Error ? err.message : "Something went wrong.";
+
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
