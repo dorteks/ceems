@@ -16,28 +16,15 @@ import {
 import { useAuth } from "@/lib/auth/auth";
 import { useRouter } from "next/navigation";
 
-// export const Route = createFileRoute("/login")({
-//   head: () => ({
-//     meta: [
-//       { title: "Sign in — CEEMS Enumeration Platform" },
-//       {
-//         name: "description",
-//         content:
-//           "Sign in to CEEMS with your work email to manage electricity customers, meters and field enumeration for your business hub.",
-//       },
-//       { property: "og:title", content: "Sign in — CEEMS Enumeration Platform" },
-//       { property: "og:description", content: "Role-based access to customer and enumeration data." },
-//     ],
-//   }),
-//   component: LoginPage,
-// });
-
 export default function LoginPage() {
   const { signIn } = useAuth();
   const router = useRouter();
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [signingIn, setSigningIn] = useState(false);
+
   const [dbCheckState, setDbCheckState] = useState<
     | { status: "idle" }
     | { status: "loading" }
@@ -57,6 +44,7 @@ export default function LoginPage() {
           <span className="flex size-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <Zap className="size-5" />
           </span>
+
           <div className="leading-tight">
             <p className="text-base font-semibold">CEEMS</p>
             <p className="text-xs text-muted-foreground">
@@ -65,24 +53,39 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <Card className="py-6 space-y-6">
+        <Card className="space-y-6 py-6">
           <CardHeader>
             <CardTitle>Sign in</CardTitle>
             <CardDescription>Use your username and password.</CardDescription>
           </CardHeader>
+
           <CardContent>
             <form
               className="space-y-6"
               onSubmit={async (e) => {
                 e.preventDefault();
-                setError(null);
-                const res = await signIn(username, password);
 
-                if (!res.ok) {
-                  setError(res.error ?? "Unable to sign in.");
-                  return;
+                if (signingIn) return;
+
+                setError(null);
+                setSigningIn(true);
+
+                try {
+                  const res = await signIn(username, password);
+
+                  if (!res.ok) {
+                    setError(res.error ?? "Unable to sign in.");
+                    return;
+                  }
+
+                  router.push(
+                    res.mustChangePassword ? "/account" : "/dashboard",
+                  );
+                } catch {
+                  setError("Unable to sign in. Please try again.");
+                } finally {
+                  setSigningIn(false);
                 }
-                router.push(res.mustChangePassword ? "/account" : "/dashboard");
               }}
             >
               {error ? (
@@ -100,6 +103,7 @@ export default function LoginPage() {
                   placeholder="superadmin"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  disabled={signingIn}
                   required
                 />
               </div>
@@ -112,12 +116,23 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={signingIn}
                   required
                 />
               </div>
 
-              <Button type="submit" className="w-full">
-                <LogIn className="size-4" /> Sign in
+              <Button type="submit" className="w-full" disabled={signingIn}>
+                {signingIn ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="size-4" />
+                    Sign in
+                  </>
+                )}
               </Button>
             </form>
 
@@ -142,6 +157,7 @@ export default function LoginPage() {
                         method: "GET",
                         cache: "no-store",
                       });
+
                       const data = (await response
                         .json()
                         .catch(() => null)) as {
@@ -203,12 +219,6 @@ export default function LoginPage() {
                 </Alert>
               ) : null}
             </div>
-
-            <p className="mt-6 rounded-md bg-secondary p-3 text-xs text-muted-foreground">
-              Demo access - username{" "}
-              <span className="font-mono">superadmin</span>, password{" "}
-              <span className="font-mono">Ceems@2026</span>
-            </p>
           </CardContent>
         </Card>
 

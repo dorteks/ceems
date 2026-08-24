@@ -110,7 +110,152 @@ function getSummaryText(item: EnumerationItem) {
   return fields.join(", ");
 }
 
-function buildCsv(items: EnumerationItem[]) {
+const CUSTOMER_EXPORT_HEADERS = [
+  "Account_number",
+  "Meter_number",
+  "Customer_type",
+  "Meter_type",
+  "Meter Phase",
+  "Customer Category (MD1,MD2,NMD)",
+  "NIN",
+  "Surname",
+  "Firstname",
+  "Othername",
+  "Address",
+  "City",
+  "State",
+  "LGA",
+  "Service_Center",
+  "Service_Code",
+  "email",
+  "Tariff",
+  "Phone_Number",
+  "Premise_Type",
+  "Nature Of Business",
+  "Date_Created",
+  "Longitude",
+  "Latitude",
+  "DSS_ID",
+  "DSS_Name",
+  "Feeder_ID",
+  "Feeder_Name",
+  "Feeder_Band",
+  "Status",
+  "Business_hub",
+  "Region",
+  "Enumerator's Name",
+  "Enumerator's ID",
+  "Enumerator's Phone NO.",
+  "Remark",
+] as const;
+
+const CUSTOMER_EXPORT_FIELDS: Record<
+  (typeof CUSTOMER_EXPORT_HEADERS)[number],
+  string
+> = {
+  Account_number: "account_number",
+  Meter_number: "meter_number",
+  Customer_type: "customer_type",
+  Meter_type: "meter_type",
+  "Meter Phase": "meter_phase",
+  "Customer Category (MD1,MD2,NMD)": "customer_category",
+  NIN: "nin",
+  Surname: "surname",
+  Firstname: "first_name",
+  Othername: "other_name",
+  Address: "address",
+  City: "city",
+  State: "state",
+  LGA: "lga",
+  Service_Center: "service_center",
+  Service_Code: "service_code",
+  email: "email",
+  Tariff: "tariff",
+  Phone_Number: "phone",
+  Premise_Type: "premise_type",
+  "Nature Of Business": "nature_of_business",
+  Date_Created: "created_at",
+  Longitude: "longitude",
+  Latitude: "latitude",
+  DSS_ID: "dss_id",
+  DSS_Name: "dss_name",
+  Feeder_ID: "feeder_id",
+  Feeder_Name: "feeder_name",
+  Feeder_Band: "feeder_band",
+  Status: "status",
+  Business_hub: "business_hub",
+  Region: "region",
+  "Enumerator's Name": "enumerator_name",
+  "Enumerator's ID": "enumerator_id",
+  "Enumerator's Phone NO.": "enumerator_phone_number",
+  Remark: "remark",
+};
+
+function csvCell(value: unknown) {
+  if (value === null || value === undefined) {
+    return '""';
+  }
+
+  const normalized =
+    typeof value === "string"
+      ? value
+      : typeof value === "number" || typeof value === "boolean"
+        ? String(value)
+        : JSON.stringify(value);
+
+  return `"${normalized.replaceAll('"', '""')}"`;
+}
+
+function buildCustomerExportCsv(items: EnumerationItem[]) {
+  const rows = items.map((item) => {
+    const snapshot =
+      item.afterData && Object.keys(item.afterData).length > 0
+        ? item.afterData
+        : (item.beforeData ?? {});
+
+    return CUSTOMER_EXPORT_HEADERS.map((header) => {
+      const fieldName = CUSTOMER_EXPORT_FIELDS[header];
+      const value = snapshot[fieldName as keyof typeof snapshot];
+      return csvCell(value ?? "");
+    }).join(",");
+  });
+
+  const headerRow = CUSTOMER_EXPORT_HEADERS.map(csvCell).join(",");
+  return [headerRow, ...rows].join("\n");
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function buildExportFilenameSuffix(filters: {
+  serviceCenter: string;
+  day: string;
+  month: string;
+  from: string;
+  to: string;
+}) {
+  const parts: string[] = [];
+
+  if (filters.serviceCenter !== "ALL") {
+    parts.push(slugify(formatServiceCenter(filters.serviceCenter)));
+  }
+
+  if (filters.day) {
+    parts.push(filters.day);
+  } else if (filters.month) {
+    parts.push(filters.month);
+  } else if (filters.from || filters.to) {
+    parts.push(`${filters.from || "start"}_to_${filters.to || "end"}`);
+  }
+
+  return parts.length ? `-${parts.join("-")}` : "";
+}
+
+function buildChangesCsv(items: EnumerationItem[]) {
   const headers = [
     "id",
     "customerId",
@@ -136,7 +281,7 @@ function buildCsv(items: EnumerationItem[]) {
       JSON.stringify(item.beforeData ?? {}),
       JSON.stringify(item.afterData ?? {}),
     ]
-      .map((value) => `"${String(value).replaceAll('"', '""')}"`)
+      .map((value) => csvCell(value))
       .join(",");
   });
 
@@ -241,13 +386,41 @@ export default function EnumerationPage() {
   };
 
   const handleExport = () => {
-    const csv = buildCsv(items);
+    const csv = buildCustomerExportCsv(items);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
 
+    const suffix = buildExportFilenameSuffix({
+      serviceCenter,
+      day,
+      month,
+      from,
+      to,
+    });
+
     link.href = url;
-    link.download = "enumeration-export.csv";
+    link.download = `enumeration-customer-export${suffix}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadChanges = () => {
+    const csv = buildChangesCsv(items);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+
+    const suffix = buildExportFilenameSuffix({
+      serviceCenter,
+      day,
+      month,
+      from,
+      to,
+    });
+
+    link.href = url;
+    link.download = `enumeration-changes${suffix}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -280,13 +453,24 @@ export default function EnumerationPage() {
             </Button>
 
             {adminAccess && (
-              <Button
-                size="sm"
-                onClick={handleExport}
-                disabled={items.length === 0}
-              >
-                <Download className="size-4" /> Export
-              </Button>
+              <>
+                <Button
+                  size="sm"
+                  onClick={handleExport}
+                  disabled={items.length === 0}
+                >
+                  <Download className="size-4" /> Export
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadChanges}
+                  disabled={items.length === 0}
+                >
+                  <Download className="size-4" /> Download changes
+                </Button>
+              </>
             )}
           </div>
         }
