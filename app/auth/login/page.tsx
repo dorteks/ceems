@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CheckCircle2, Loader2, LogIn, ShieldCheck, Zap } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -135,6 +136,15 @@ export default function LoginPage() {
                 )}
               </Button>
             </form>
+
+            <div className="mt-4 flex items-center justify-between gap-3 text-sm">
+              <p className="text-muted-foreground">
+                Forgot your password?
+              </p>
+              <Button asChild variant="link" className="h-auto p-0">
+                <Link href="/auth/forgot-password">Reset it here</Link>
+              </Button>
+            </div>
 
             <div className="mt-4 rounded-lg border bg-muted/30 p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

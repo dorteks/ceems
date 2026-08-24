@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "../_components/app-shell";
 import { StatusBadge } from "../_components/status-badge";
 import { InviteUserDialog } from "../_components/invite-user-dialog";
+import { ResetPasswordDialog } from "../_components/reset-password-dialog";
 import { useAuth } from "@/lib/auth/auth";
 
 // export const Route = createFileRoute("/administration")({
@@ -118,6 +119,7 @@ export default function AdminPage() {
                       <TableHead className="hidden md:table-cell">
                         Password
                       </TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -163,6 +165,12 @@ export default function AdminPage() {
                           >
                             {u.mustChangePassword ? "Temporary" : "Set"}
                           </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <ResetPasswordDialog
+                            username={u.username}
+                            name={u.name}
+                          />
                         </TableCell>
                       </TableRow>
                     ))}

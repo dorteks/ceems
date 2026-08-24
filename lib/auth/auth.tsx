@@ -35,6 +35,11 @@ interface AuthValue {
     current: string,
     next: string,
   ) => Promise<{ ok: boolean; error?: string }>;
+  resetUserPassword: (username: string) => Promise<{
+    ok: boolean;
+    error?: string;
+    generatedPassword?: string;
+  }>;
   canManageHub: (hub: string) => boolean;
   isSuperAdmin: boolean;
   isDataManager: boolean;
@@ -224,6 +229,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         return { ok: true as const };
+      },
+      resetUserPassword: async (username) => {
+        if (!isSuperAdmin) {
+          return {
+            ok: false as const,
+            error: "Only a Super Administrator can reset passwords.",
+          };
+        }
+
+        const response = await fetch("/api/users/reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ username }),
+        });
+        const data = (await response.json().catch(() => null)) as {
+          error?: string;
+          generatedPassword?: string;
+          user?: UserRecord;
+        } | null;
+
+        if (!response.ok || !data?.generatedPassword) {
+          return {
+            ok: false as const,
+            error: data?.error ?? "Unable to reset password.",
+          };
+        }
+
+        if (data.user) {
+          setAccounts((current) =>
+            current.map((account) =>
+              account.id === data.user!.id
+                ? { ...account, mustChangePassword: true }
+                : account,
+            ),
+          );
+        }
+
+        return {
+          ok: true as const,
+          generatedPassword: data.generatedPassword,
+        };
       },
       canManageHub: (hub: string) =>
         !!user && (user.hub === "All" || user.hub === hub),
