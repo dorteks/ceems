@@ -1,0 +1,1 @@
+ALTER TYPE "ServiceCenter" ADD VALUE 'OKEFIA';
