@@ -37,6 +37,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { ServiceCenter, type ServiceCenterValue } from "@/lib/prisma-enums";
 import { PageHeader } from "../_components/app-shell";
 import { useAuth } from "@/lib/auth/auth";
@@ -54,6 +63,16 @@ type EnumerationItem = {
   beforeData: Record<string, unknown> | null;
   afterData: Record<string, unknown> | null;
 };
+
+type EnumerationResponse = {
+  items: EnumerationItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+const DEFAULT_PAGE_SIZE = 100;
 
 const serviceCenterOptions = [
   { label: "All service centers", value: "ALL" },
@@ -108,6 +127,26 @@ function getSummaryText(item: EnumerationItem) {
   }
 
   return fields.join(", ");
+}
+
+function buildPaginationItems(page: number, totalPages: number) {
+  if (totalPages <= 1) {
+    return [];
+  }
+
+  const pages = new Set<number>([1, totalPages, page - 1, page, page + 1]);
+
+  return Array.from(pages)
+    .filter((value) => value >= 1 && value <= totalPages)
+    .sort((a, b) => a - b)
+    .reduce<Array<number | "ellipsis">>((acc, current, index, array) => {
+      if (index > 0 && current - array[index - 1] > 1) {
+        acc.push("ellipsis");
+      }
+
+      acc.push(current);
+      return acc;
+    }, []);
 }
 
 const CUSTOMER_EXPORT_HEADERS = [
@@ -293,6 +332,9 @@ export default function EnumerationPage() {
   const router = useRouter();
 
   const [items, setItems] = useState<EnumerationItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(DEFAULT_PAGE_SIZE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [serviceCenter, setServiceCenter] = useState("ALL");
@@ -308,7 +350,10 @@ export default function EnumerationPage() {
       setLoading(true);
       setError(null);
 
-      const params = new URLSearchParams({ limit: "200" });
+      const params = new URLSearchParams({
+        page: String(page),
+        size: String(pageSize),
+      });
 
       if (serviceCenter !== "ALL") {
         params.set("serviceCenter", serviceCenter);
@@ -332,13 +377,33 @@ export default function EnumerationPage() {
         const response = await fetch(`/api/enumerations?${params.toString()}`, {
           signal: controller.signal,
         });
-        const data = await response.json();
+        const data = (await response.json()) as
+          | EnumerationResponse
+          | { error?: string }
+          | null;
 
         if (!response.ok) {
           throw new Error(data?.error || "Failed to load enumeration data");
         }
 
-        setItems(Array.isArray(data.items) ? data.items : []);
+        const nextTotal =
+          data && typeof data.total === "number" ? data.total : 0;
+        const nextTotalPages =
+          data && typeof data.totalPages === "number"
+            ? data.totalPages
+            : Math.max(1, Math.ceil(nextTotal / pageSize));
+        setTotal(nextTotal);
+
+        if (page > nextTotalPages) {
+          setPage(nextTotalPages);
+          return;
+        }
+
+        const nextItems = Array.isArray(data?.items)
+          ? (data.items as EnumerationItem[])
+          : [];
+
+        setItems(nextItems);
       } catch (caughtError) {
         if (
           caughtError instanceof DOMException &&
@@ -350,6 +415,7 @@ export default function EnumerationPage() {
         console.error("Failed to fetch enumerations:", caughtError);
         setError("Unable to load enumeration records right now.");
         setItems([]);
+        setTotal(0);
       } finally {
         if (!controller.signal.aborted) {
           setLoading(false);
@@ -360,7 +426,7 @@ export default function EnumerationPage() {
     void fetchData();
 
     return () => controller.abort();
-  }, [serviceCenter, day, month, from, to]);
+  }, [serviceCenter, day, month, from, to, page, pageSize]);
 
   const stats = useMemo(() => {
     const uniqueUsers = new Set(items.map((item) => item.userName)).size;
@@ -371,11 +437,16 @@ export default function EnumerationPage() {
     ).size;
 
     return {
-      total: items.length,
+      total,
       uniqueUsers,
       uniqueCenters,
     };
-  }, [items]);
+  }, [items, total]);
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const firstRecordIndex = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const lastRecordIndex = Math.min(currentPage * pageSize, total);
 
   const resetFilters = () => {
     setServiceCenter("ALL");
@@ -383,6 +454,7 @@ export default function EnumerationPage() {
     setMonth("");
     setFrom("");
     setTo("");
+    setPage(1);
   };
 
   const handleExport = () => {
@@ -482,7 +554,7 @@ export default function EnumerationPage() {
             icon: ClipboardList,
             label: "Records in scope",
             value: stats.total.toLocaleString(),
-            note: activeFilterLabel,
+            note: `${activeFilterLabel} · Page ${currentPage.toLocaleString()} of ${totalPages.toLocaleString()}`,
           },
           {
             icon: UserRoundCog,
@@ -526,7 +598,13 @@ export default function EnumerationPage() {
           <div className="grid gap-4 md:grid-cols-5">
             <div className="space-y-2 md:col-span-1">
               <Label htmlFor="service-center">Service center</Label>
-              <Select value={serviceCenter} onValueChange={setServiceCenter}>
+              <Select
+                value={serviceCenter}
+                onValueChange={(value) => {
+                  setServiceCenter(value);
+                  setPage(1);
+                }}
+              >
                 <SelectTrigger id="service-center" className="w-full">
                   <SelectValue placeholder="All service centers" />
                 </SelectTrigger>
@@ -547,6 +625,7 @@ export default function EnumerationPage() {
                 type="date"
                 value={day}
                 onChange={(event) => {
+                  setPage(1);
                   setDay(event.target.value);
                   setMonth("");
                   setFrom("");
@@ -562,6 +641,7 @@ export default function EnumerationPage() {
                 type="month"
                 value={month}
                 onChange={(event) => {
+                  setPage(1);
                   setMonth(event.target.value);
                   setDay("");
                   setFrom("");
@@ -577,6 +657,7 @@ export default function EnumerationPage() {
                 type="date"
                 value={from}
                 onChange={(event) => {
+                  setPage(1);
                   setFrom(event.target.value);
                   setDay("");
                   setMonth("");
@@ -591,6 +672,7 @@ export default function EnumerationPage() {
                 type="date"
                 value={to}
                 onChange={(event) => {
+                  setPage(1);
                   setTo(event.target.value);
                   setDay("");
                   setMonth("");
@@ -657,7 +739,7 @@ export default function EnumerationPage() {
                     ) : (
                       items.map((item) => (
                         <TableRow
-                          key={item.id}
+                          key={item.accountNumber}
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() =>
                             router.push(`/customers/${item.customerId}`)
@@ -712,92 +794,174 @@ export default function EnumerationPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {items.slice(0, 12).map((item) => {
-                const changedFields = getChangedFields(
-                  item.beforeData,
-                  item.afterData,
-                );
-
-                return (
-                  <div
-                    key={item.id}
-                    className="rounded-lg border bg-muted/20 p-4"
-                  >
-                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <p className="font-medium">
-                          Customer #{item.customerId}
-                        </p>
-
-                        <div className="flex flex-col gap-1 text-sm text-foreground sm:flex-row sm:items-center sm:gap-4">
-                          <p>
-                            Account:{" "}
-                            <span className="font-semibold">
-                              {item.accountNumber}
-                            </span>
-                          </p>
-
-                          <p>
-                            Meter:{" "}
-                            <span className="font-semibold">
-                              {item.meterNumber ?? "—"}
-                            </span>
-                          </p>
-                        </div>
-
-                        <p className="text-sm text-muted-foreground">
-                          {item.userName} ·{" "}
-                          {formatServiceCenter(item.serviceCenter)}
-                        </p>
-                      </div>
-
-                      <span className="text-xs text-muted-foreground">
-                        {formatDateTime(item.enumeratedAt)}
-                      </span>
-                    </div>
-
-                    {changedFields.length > 0 ? (
-                      <div className="space-y-2">
-                        {changedFields.map((field) => (
-                          <div
-                            key={field}
-                            className="rounded-md border bg-background p-2 text-sm"
-                          >
-                            <div className="mb-1 font-medium text-foreground">
-                              {field}
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
-                              <span>
-                                Before:{" "}
-                                {String(item.beforeData?.[field] ?? "—")}
-                              </span>
-                              <span>→</span>
-                              <span>
-                                After: {String(item.afterData?.[field] ?? "—")}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        No field-level differences were recorded for this
-                        update.
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-
-              {items.length === 0 ? (
+              {loading ? (
+                <p className="text-sm text-muted-foreground">
+                  Loading enumeration changes...
+                </p>
+              ) : items.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   No field changes are available for the selected scope.
                 </p>
-              ) : null}
+              ) : (
+                items.slice(0, 12).map((item) => {
+                  const changedFields = getChangedFields(
+                    item.beforeData,
+                    item.afterData,
+                  );
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="rounded-lg border bg-muted/20 p-4"
+                    >
+                      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="font-medium">
+                            Customer #{item.customerId}
+                          </p>
+
+                          <div className="flex flex-col gap-1 text-sm text-foreground sm:flex-row sm:items-center sm:gap-4">
+                            <p>
+                              Account:{" "}
+                              <span className="font-semibold">
+                                {item.accountNumber}
+                              </span>
+                            </p>
+
+                            <p>
+                              Meter:{" "}
+                              <span className="font-semibold">
+                                {item.meterNumber ?? "—"}
+                              </span>
+                            </p>
+                          </div>
+
+                          <p className="text-sm text-muted-foreground">
+                            {item.userName} ·{" "}
+                            {formatServiceCenter(item.serviceCenter)}
+                          </p>
+                        </div>
+
+                        <span className="text-xs text-muted-foreground">
+                          {formatDateTime(item.enumeratedAt)}
+                        </span>
+                      </div>
+
+                      {changedFields.length > 0 ? (
+                        <div className="space-y-2">
+                          {changedFields.map((field) => (
+                            <div
+                              key={field}
+                              className="rounded-md border bg-background p-2 text-sm"
+                            >
+                              <div className="mb-1 font-medium text-foreground">
+                                {field}
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
+                                <span>
+                                  Before:{" "}
+                                  {String(item.beforeData?.[field] ?? "—")}
+                                </span>
+                                <span>→</span>
+                                <span>
+                                  After:{" "}
+                                  {String(item.afterData?.[field] ?? "—")}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          No field-level differences were recorded for this
+                          update.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })
+              )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      <div className="my-4 flex w-full flex-col gap-4 rounded-lg border bg-background px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-muted-foreground">
+          Showing{" "}
+          <span className="font-medium text-foreground">
+            {firstRecordIndex.toLocaleString()}-
+            {lastRecordIndex.toLocaleString()}
+          </span>{" "}
+          of{" "}
+          <span className="font-medium text-foreground">
+            {total.toLocaleString()}
+          </span>{" "}
+          records
+        </p>
+
+        <div>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setPage((current) => Math.max(1, current - 1));
+                  }}
+                  aria-disabled={page <= 1 || loading}
+                  className={
+                    page <= 1 || loading ? "pointer-events-none opacity-50" : ""
+                  }
+                />
+              </PaginationItem>
+
+              {buildPaginationItems(currentPage, totalPages).map(
+                (item, index) =>
+                  item === "ellipsis" ? (
+                    <PaginationItem key={`ellipsis-${index}`}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={item}>
+                      <PaginationLink
+                        href="#"
+                        isActive={item === currentPage}
+                        aria-disabled={loading}
+                        className={
+                          loading ? "pointer-events-none opacity-50" : ""
+                        }
+                        onClick={(event) => {
+                          event.preventDefault();
+                          setPage(item);
+                        }}
+                      >
+                        {item}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ),
+              )}
+
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setPage((current) => Math.min(totalPages, current + 1));
+                  }}
+                  aria-disabled={page >= totalPages || loading}
+                  className={
+                    page >= totalPages || loading
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      </div>
     </>
   );
 }

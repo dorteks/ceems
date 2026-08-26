@@ -213,9 +213,9 @@ export function CustomerForm({
 
       <form id="customer-form" className="space-y-6" onSubmit={handleSubmit}>
         {error ? (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <div className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3">
+            <span className="text-sm text-destructive">{error}</span>
+          </div>
         ) : null}
 
         <Card className="rounded-sm text-sm">

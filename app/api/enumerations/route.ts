@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { ServiceCenter, type ServiceCenterValue } from "@/lib/prisma-enums";
-import { listEnumerations } from "../../../server/services/enumerationService";
+import {
+  getEnumerationStats,
+  listEnumerations,
+} from "../../../server/services/enumerationService";
 
 function parseDay(value: string) {
   const date = new Date(`${value}T00:00:00.000Z`);
@@ -47,8 +50,10 @@ export async function GET(req: Request) {
     const month = url.searchParams.get("month");
     const fromRaw = url.searchParams.get("from");
     const toRaw = url.searchParams.get("to");
-    const limit = Number(url.searchParams.get("limit") || "100");
-    const offset = Number(url.searchParams.get("offset") || "0");
+    const pageRaw = url.searchParams.get("page");
+    const sizeRaw = url.searchParams.get("size");
+    const limitRaw = url.searchParams.get("limit");
+    const offsetRaw = url.searchParams.get("offset");
 
     const customerId = customerIdRaw ? Number(customerIdRaw) : undefined;
 
@@ -97,16 +102,54 @@ export async function GET(req: Request) {
       }
     }
 
+    const pageSizeCandidate = Number(sizeRaw ?? limitRaw ?? "100");
+    const pageCandidate = Number(pageRaw ?? "1");
+    const offsetCandidate = Number(offsetRaw ?? "0");
+
+    const pageSize =
+      Number.isFinite(pageSizeCandidate) && pageSizeCandidate > 0
+        ? Math.min(pageSizeCandidate, 500)
+        : 100;
+    const pageOffset = Number.isFinite(offsetCandidate) && offsetCandidate > 0
+      ? offsetCandidate
+      : 0;
+    const page = Number.isFinite(pageCandidate) && pageCandidate > 0
+      ? pageCandidate
+      : Math.floor(pageOffset / pageSize) + 1;
+    const resolvedOffset =
+      Number.isFinite(offsetCandidate) && offsetCandidate > 0
+        ? offsetCandidate
+        : (page - 1) * pageSize;
+
     const items = await listEnumerations({
       customerId,
       serviceCenter: serviceCenterValue ?? undefined,
       from,
       to,
-      limit: Number.isFinite(limit) && limit > 0 ? Math.min(limit, 500) : 100,
-      offset: Number.isFinite(offset) && offset > 0 ? offset : 0,
+      limit: pageSize,
+      offset: resolvedOffset,
     });
 
-    return NextResponse.json({ items }, { status: 200 });
+    const { count } = await getEnumerationStats({
+      customerId,
+      serviceCenter: serviceCenterValue ?? undefined,
+      from,
+      to,
+    });
+
+    const totalPages =
+      pageSize > 0 ? Math.max(1, Math.ceil(count / pageSize)) : 1;
+
+    return NextResponse.json(
+      {
+        items,
+        total: count,
+        page,
+        pageSize,
+        totalPages,
+      },
+      { status: 200 },
+    );
   } catch (error: unknown) {
     console.error(error);
 

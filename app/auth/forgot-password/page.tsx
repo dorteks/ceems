@@ -26,7 +26,9 @@ export default function ForgotPasswordPage() {
   const [identifier, setIdentifier] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(
+    null,
+  );
 
   const copyPassword = async () => {
     if (!generatedPassword || !navigator.clipboard) return;
@@ -44,9 +46,7 @@ export default function ForgotPasswordPage() {
 
           <div className="leading-tight">
             <p className="text-base font-semibold">CEEMS</p>
-            <p className="text-xs text-muted-foreground">
-              Password recovery
-            </p>
+            <p className="text-xs text-muted-foreground">Password recovery</p>
           </div>
         </div>
 
@@ -136,9 +136,7 @@ export default function ForgotPasswordPage() {
                       body: JSON.stringify({ identifier }),
                     });
 
-                    const data = (await response
-                      .json()
-                      .catch(() => null)) as {
+                    const data = (await response.json().catch(() => null)) as {
                       error?: string;
                       generatedPassword?: string;
                     } | null;
@@ -157,9 +155,9 @@ export default function ForgotPasswordPage() {
                 }}
               >
                 {error ? (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
+                  <div className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3">
+                    <span className="text-sm text-destructive">{error}</span>
+                  </div>
                 ) : null}
 
                 <div className="space-y-2">
