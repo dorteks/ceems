@@ -67,6 +67,9 @@ type EnumerationItem = {
 type EnumerationResponse = {
   items: EnumerationItem[];
   total: number;
+  totalEvents: number;
+  uniqueCustomers: number;
+  repeatedEdits: number;
   page: number;
   pageSize: number;
   totalPages: number;
@@ -101,6 +104,12 @@ function isEnumerationResponse(
     Array.isArray(value.items) &&
     "total" in value &&
     typeof value.total === "number" &&
+    "totalEvents" in value &&
+    typeof value.totalEvents === "number" &&
+    "uniqueCustomers" in value &&
+    typeof value.uniqueCustomers === "number" &&
+    "repeatedEdits" in value &&
+    typeof value.repeatedEdits === "number" &&
     "page" in value &&
     typeof value.page === "number" &&
     "pageSize" in value &&
@@ -227,7 +236,10 @@ function buildEnumerationParams(filters: {
     params.set("month", filters.month);
   } else if (filters.from || filters.to) {
     if (filters.from) {
-      params.set("from", new Date(`${filters.from}T00:00:00.000Z`).toISOString());
+      params.set(
+        "from",
+        new Date(`${filters.from}T00:00:00.000Z`).toISOString(),
+      );
     }
 
     if (filters.to) {
@@ -432,6 +444,11 @@ export default function EnumerationPage() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [exporting, setExporting] = useState(false);
+  const [summary, setSummary] = useState({
+    totalEvents: 0,
+    uniqueCustomers: 0,
+    repeatedEdits: 0,
+  });
 
   useEffect(() => {
     const controller = new AbortController();
@@ -466,13 +483,18 @@ export default function EnumerationPage() {
           );
         }
 
-        const nextTotal =
-          isEnumerationResponse(data) ? data.total : 0;
-        const nextTotalPages =
-          isEnumerationResponse(data)
-            ? data.totalPages
-            : Math.max(1, Math.ceil(nextTotal / pageSize));
+        const nextTotal = isEnumerationResponse(data) ? data.total : 0;
+        const nextTotalPages = isEnumerationResponse(data)
+          ? data.totalPages
+          : Math.max(1, Math.ceil(nextTotal / pageSize));
         setTotal(nextTotal);
+        setSummary({
+          totalEvents: isEnumerationResponse(data) ? data.totalEvents : 0,
+          uniqueCustomers: isEnumerationResponse(data)
+            ? data.uniqueCustomers
+            : 0,
+          repeatedEdits: isEnumerationResponse(data) ? data.repeatedEdits : 0,
+        });
 
         if (page > nextTotalPages) {
           setPage(nextTotalPages);
@@ -494,6 +516,11 @@ export default function EnumerationPage() {
         setError("Unable to load enumeration records right now.");
         setItems([]);
         setTotal(0);
+        setSummary({
+          totalEvents: 0,
+          uniqueCustomers: 0,
+          repeatedEdits: 0,
+        });
       } finally {
         if (!controller.signal.aborted) {
           setLoading(false);
@@ -515,7 +542,9 @@ export default function EnumerationPage() {
       to,
     });
 
-    const response = await fetch(`/api/enumerations/export?${params.toString()}`);
+    const response = await fetch(
+      `/api/enumerations/export?${params.toString()}`,
+    );
     const data = (await response.json()) as
       | EnumerationExportResponse
       | { error?: string }
@@ -523,7 +552,10 @@ export default function EnumerationPage() {
 
     if (!response.ok) {
       throw new Error(
-        data && typeof data === "object" && "error" in data && typeof data.error === "string"
+        data &&
+          typeof data === "object" &&
+          "error" in data &&
+          typeof data.error === "string"
           ? data.error || "Failed to export enumeration data"
           : "Failed to export enumeration data",
       );
@@ -531,21 +563,6 @@ export default function EnumerationPage() {
 
     return isEnumerationExportResponse(data) ? data.items : [];
   };
-
-  const stats = useMemo(() => {
-    const uniqueUsers = new Set(items.map((item) => item.userName)).size;
-    const uniqueCenters = new Set(
-      items
-        .map((item) => item.serviceCenter)
-        .filter((value): value is ServiceCenterValue => Boolean(value)),
-    ).size;
-
-    return {
-      total,
-      uniqueUsers,
-      uniqueCenters,
-    };
-  }, [items, total]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -590,6 +607,21 @@ export default function EnumerationPage() {
     }
   };
 
+  const stats = useMemo(() => {
+    const uniqueUsers = new Set(items.map((item) => item.userName)).size;
+    const uniqueCenters = new Set(
+      items
+        .map((item) => item.serviceCenter)
+        .filter((value): value is ServiceCenterValue => Boolean(value)),
+    ).size;
+
+    return {
+      total,
+      uniqueUsers,
+      uniqueCenters,
+    };
+  }, [items, total]);
+
   const handleDownloadChanges = async () => {
     try {
       setExporting(true);
@@ -619,27 +651,37 @@ export default function EnumerationPage() {
     }
   };
 
-  const activeFilterLabel = useMemo(() => {
-    if (day) {
-      return `Day: ${day}`;
-    }
-
-    if (month) {
-      return `Month: ${month}`;
-    }
-
-    if (from || to) {
-      return `Range: ${from || "start"} to ${to || "end"}`;
-    }
-
-    return "All available records";
-  }, [day, month, from, to]);
+  const activeFilterLabel = day
+    ? `Day: ${day}`
+    : month
+      ? `Month: ${month}`
+      : from || to
+        ? `Range: ${from || "start"} to ${to || "end"}`
+        : "All available records";
 
   return (
     <>
       <PageHeader
         title="Enumeration"
-        description="Enumerated customer updates, date filters and service-center audit trail"
+        description={
+          <div>
+            <p className="text-[16px]">
+              Enumerated customer updates, date filters and service-center audit
+              trail
+            </p>
+            <p className="text-muted-foreground">
+              <span className="font-medium  text-foreground">
+                {stats.uniqueUsers.toLocaleString()}
+              </span>{" "}
+              users updated customer records.{" "}
+              <span className="font-medium text-foreground">
+                {stats.uniqueCenters.toLocaleString()}
+              </span>{" "}
+              service centers are active in this view.
+            </p>
+          </div>
+        }
+        // description=""
         actions={
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={resetFilters}>
@@ -674,21 +716,21 @@ export default function EnumerationPage() {
         {[
           {
             icon: ClipboardList,
-            label: "Records in scope",
-            value: stats.total.toLocaleString(),
+            label: "Enumeration events",
+            value: summary.totalEvents.toLocaleString(),
             note: `${activeFilterLabel} · Page ${currentPage.toLocaleString()} of ${totalPages.toLocaleString()}`,
           },
           {
             icon: UserRoundCog,
-            label: "Unique users",
-            value: stats.uniqueUsers.toLocaleString(),
-            note: "updated customer records",
+            label: "Unique customers",
+            value: summary.uniqueCustomers.toLocaleString(),
+            note: "one row per customer",
           },
           {
             icon: CalendarRange,
-            label: "Service centers",
-            value: stats.uniqueCenters.toLocaleString(),
-            note: "active in this view",
+            label: "Repeated edits",
+            value: summary.repeatedEdits.toLocaleString(),
+            note: "extra updates on the same customer",
           },
         ].map((s) => (
           <Card key={s.label}>
@@ -925,7 +967,9 @@ export default function EnumerationPage() {
                   No field changes are available for the selected scope.
                 </p>
               ) : (
-                items.slice(0, 12).map((item) => {
+                items.slice(0, 100).map((item, index) => {
+                  const cardNumber = index + 1;
+
                   const changedFields = getChangedFields(
                     item.beforeData,
                     item.afterData,
@@ -934,8 +978,12 @@ export default function EnumerationPage() {
                   return (
                     <div
                       key={item.id}
-                      className="rounded-lg border bg-muted/20 p-4"
+                      className="relative rounded-lg border bg-muted/20 p-4"
                     >
+                      <span className="absolute bg-muted right-1 top-1 flex h-6 min-w-6 min-h-6 items-center justify-center rounded-full border px-1.5 text-[11px] font-semibold text-muted-foreground shadow-sm">
+                        {cardNumber}
+                      </span>
+
                       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <p className="font-medium">
@@ -1008,7 +1056,7 @@ export default function EnumerationPage() {
         </TabsContent>
       </Tabs>
 
-      <div className="my-4 flex w-full flex-col gap-4 rounded-lg border bg-background px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="my-4 flex w-full flex-col gap-4 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Showing{" "}
           <span className="font-medium text-foreground">

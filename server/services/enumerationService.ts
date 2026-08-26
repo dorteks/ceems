@@ -218,11 +218,37 @@ export async function getEnumerationStats(options?: {
   from?: Date;
   to?: Date;
 }) {
-  const count = await prisma.customerEnumeration.count({
-    where: buildWhereClause(options),
-  });
+  const [row] = await prisma.$queryRaw<
+    Array<{
+      total_events: number;
+      unique_customers: number;
+    }>
+  >(Prisma.sql`
+    SELECT
+      COUNT(*)::int AS total_events,
+      COUNT(DISTINCT customer_id)::int AS unique_customers
+    FROM "customer_enumerations"
+    WHERE 1 = 1
+      ${options?.customerId != null ? Prisma.sql`AND customer_id = ${options.customerId}` : Prisma.empty}
+      ${options?.serviceCenter ? Prisma.sql`AND service_center = ${options.serviceCenter}` : Prisma.empty}
+      ${
+        options?.from || options?.to
+          ? Prisma.sql`
+            AND enumerated_at >= ${options.from ?? new Date("1970-01-01T00:00:00.000Z")}
+            AND enumerated_at <= ${options.to ?? new Date("9999-12-31T23:59:59.999Z")}
+          `
+          : Prisma.empty
+      }
+  `);
 
-  return { count };
+  const totalEvents = row?.total_events ?? 0;
+  const uniqueCustomers = row?.unique_customers ?? 0;
+
+  return {
+    totalEvents,
+    uniqueCustomers,
+    repeatedEdits: Math.max(0, totalEvents - uniqueCustomers),
+  };
 }
 
 export async function exportEnumerations(options?: {
@@ -231,10 +257,32 @@ export async function exportEnumerations(options?: {
   from?: Date;
   to?: Date;
 }) {
-  const rows = await prisma.customerEnumeration.findMany({
-    where: buildWhereClause(options),
-    orderBy: [{ enumerated_at: "desc" }, { id: "desc" }],
-  });
+  const rows = await prisma.$queryRaw<CustomerEnumerationRow[]>(Prisma.sql`
+    SELECT DISTINCT ON (customer_id)
+      id,
+      customer_id,
+      account_number,
+      meter_number,
+      user_id,
+      user_name,
+      service_center,
+      enumerated_at,
+      before_data,
+      after_data
+    FROM "customer_enumerations"
+    WHERE 1 = 1
+      ${options?.customerId != null ? Prisma.sql`AND customer_id = ${options.customerId}` : Prisma.empty}
+      ${options?.serviceCenter ? Prisma.sql`AND service_center = ${options.serviceCenter}` : Prisma.empty}
+      ${
+        options?.from || options?.to
+          ? Prisma.sql`
+            AND enumerated_at >= ${options.from ?? new Date("1970-01-01T00:00:00.000Z")}
+            AND enumerated_at <= ${options.to ?? new Date("9999-12-31T23:59:59.999Z")}
+          `
+          : Prisma.empty
+      }
+    ORDER BY customer_id, enumerated_at DESC, id DESC
+  `);
 
   return rows.map(serializeEnumeration);
 }

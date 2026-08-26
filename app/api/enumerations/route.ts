@@ -130,20 +130,24 @@ export async function GET(req: Request) {
       offset: resolvedOffset,
     });
 
-    const { count } = await getEnumerationStats({
+    const { totalEvents, uniqueCustomers, repeatedEdits } =
+      await getEnumerationStats({
       customerId,
       serviceCenter: serviceCenterValue ?? undefined,
       from,
       to,
-    });
+      });
 
     const totalPages =
-      pageSize > 0 ? Math.max(1, Math.ceil(count / pageSize)) : 1;
+      pageSize > 0 ? Math.max(1, Math.ceil(totalEvents / pageSize)) : 1;
 
     return NextResponse.json(
       {
         items,
-        total: count,
+        total: totalEvents,
+        totalEvents,
+        uniqueCustomers,
+        repeatedEdits,
         page,
         pageSize,
         totalPages,
