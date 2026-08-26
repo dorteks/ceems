@@ -30,7 +30,9 @@ export function ResetPasswordDialog({
   const { resetUserPassword, isSuperAdmin } = useAuth();
   const [open, setOpen] = useState(false);
   const [confirmUsername, setConfirmUsername] = useState("");
-  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [resetting, setResetting] = useState(false);
 
@@ -65,8 +67,8 @@ export function ResetPasswordDialog({
         <DialogHeader>
           <DialogTitle>Reset password</DialogTitle>
           <DialogDescription>
-            Generate a temporary password for {name}. The account will be set
-            to change password at next sign-in.
+            Generate a temporary password for {name}. The account will be set to
+            change password at next sign-in.
           </DialogDescription>
         </DialogHeader>
 
@@ -129,7 +131,9 @@ export function ResetPasswordDialog({
               e.preventDefault();
               if (resetting) return;
 
-              if (confirmUsername.trim().toLowerCase() !== username.toLowerCase()) {
+              if (
+                confirmUsername.trim().toLowerCase() !== username.toLowerCase()
+              ) {
                 setError("Type the username exactly to confirm the reset.");
                 return;
               }
@@ -153,9 +157,9 @@ export function ResetPasswordDialog({
             }}
           >
             {error ? (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
+              <div className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3">
+                <span className="text-sm text-destructive">{error}</span>
+              </div>
             ) : null}
 
             <div className="space-y-2">
@@ -164,7 +168,9 @@ export function ResetPasswordDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor={`confirm-${username}`}>Type username to confirm</Label>
+              <Label htmlFor={`confirm-${username}`}>
+                Type username to confirm
+              </Label>
               <Input
                 id={`confirm-${username}`}
                 placeholder={username}

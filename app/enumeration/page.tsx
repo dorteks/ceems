@@ -37,6 +37,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { ServiceCenter, type ServiceCenterValue } from "@/lib/prisma-enums";
 import { PageHeader } from "../_components/app-shell";
 import { useAuth } from "@/lib/auth/auth";
@@ -54,6 +63,65 @@ type EnumerationItem = {
   beforeData: Record<string, unknown> | null;
   afterData: Record<string, unknown> | null;
 };
+
+type EnumerationResponse = {
+  items: EnumerationItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+type EnumerationExportResponse = {
+  items: EnumerationItem[];
+};
+
+function isEnumerationExportResponse(
+  value: EnumerationExportResponse | { error?: string } | null,
+): value is EnumerationExportResponse {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "items" in value &&
+    Array.isArray(value.items)
+  );
+}
+
+type EnumerationErrorResponse = {
+  error?: string;
+};
+
+function isEnumerationResponse(
+  value: EnumerationResponse | EnumerationErrorResponse | null,
+): value is EnumerationResponse {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "items" in value &&
+    Array.isArray(value.items) &&
+    "total" in value &&
+    typeof value.total === "number" &&
+    "page" in value &&
+    typeof value.page === "number" &&
+    "pageSize" in value &&
+    typeof value.pageSize === "number" &&
+    "totalPages" in value &&
+    typeof value.totalPages === "number"
+  );
+}
+
+function isEnumerationErrorResponse(
+  value: EnumerationResponse | EnumerationErrorResponse | null,
+): value is EnumerationErrorResponse {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "error" in value &&
+    typeof value.error === "string"
+  );
+}
+
+const DEFAULT_PAGE_SIZE = 100;
 
 const serviceCenterOptions = [
   { label: "All service centers", value: "ALL" },
@@ -108,6 +176,66 @@ function getSummaryText(item: EnumerationItem) {
   }
 
   return fields.join(", ");
+}
+
+function buildPaginationItems(page: number, totalPages: number) {
+  if (totalPages <= 1) {
+    return [];
+  }
+
+  const pages = new Set<number>([1, totalPages, page - 1, page, page + 1]);
+
+  return Array.from(pages)
+    .filter((value) => value >= 1 && value <= totalPages)
+    .sort((a, b) => a - b)
+    .reduce<Array<number | "ellipsis">>((acc, current, index, array) => {
+      if (index > 0 && current - array[index - 1] > 1) {
+        acc.push("ellipsis");
+      }
+
+      acc.push(current);
+      return acc;
+    }, []);
+}
+
+function buildEnumerationParams(filters: {
+  page?: number;
+  pageSize?: number;
+  serviceCenter: string;
+  day: string;
+  month: string;
+  from: string;
+  to: string;
+}) {
+  const params = new URLSearchParams();
+
+  if (filters.page !== undefined) {
+    params.set("page", String(filters.page));
+  }
+
+  if (filters.pageSize !== undefined) {
+    params.set("size", String(filters.pageSize));
+  }
+
+  if (filters.serviceCenter !== "ALL") {
+    params.set("serviceCenter", filters.serviceCenter);
+  }
+
+  if (filters.day) {
+    params.set("day", filters.day);
+  } else if (filters.month) {
+    params.set("month", filters.month);
+  } else if (filters.from || filters.to) {
+    if (filters.from) {
+      params.set("from", new Date(`${filters.from}T00:00:00.000Z`).toISOString());
+    }
+
+    if (filters.to) {
+      params.set("to", new Date(`${filters.to}T23:59:59.999Z`).toISOString());
+    }
+  }
+
+  return params;
 }
 
 const CUSTOMER_EXPORT_HEADERS = [
@@ -293,6 +421,9 @@ export default function EnumerationPage() {
   const router = useRouter();
 
   const [items, setItems] = useState<EnumerationItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(DEFAULT_PAGE_SIZE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [serviceCenter, setServiceCenter] = useState("ALL");
@@ -300,6 +431,7 @@ export default function EnumerationPage() {
   const [month, setMonth] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -307,38 +439,49 @@ export default function EnumerationPage() {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-
-      const params = new URLSearchParams({ limit: "200" });
-
-      if (serviceCenter !== "ALL") {
-        params.set("serviceCenter", serviceCenter);
-      }
-
-      if (day) {
-        params.set("day", day);
-      } else if (month) {
-        params.set("month", month);
-      } else if (from || to) {
-        if (from) {
-          params.set("from", new Date(`${from}T00:00:00.000Z`).toISOString());
-        }
-
-        if (to) {
-          params.set("to", new Date(`${to}T23:59:59.999Z`).toISOString());
-        }
-      }
+      const params = buildEnumerationParams({
+        page,
+        pageSize,
+        serviceCenter,
+        day,
+        month,
+        from,
+        to,
+      });
 
       try {
         const response = await fetch(`/api/enumerations?${params.toString()}`, {
           signal: controller.signal,
         });
-        const data = await response.json();
+        const data = (await response.json()) as
+          | EnumerationResponse
+          | EnumerationErrorResponse
+          | null;
 
         if (!response.ok) {
-          throw new Error(data?.error || "Failed to load enumeration data");
+          throw new Error(
+            isEnumerationErrorResponse(data)
+              ? data.error || "Failed to load enumeration data"
+              : "Failed to load enumeration data",
+          );
         }
 
-        setItems(Array.isArray(data.items) ? data.items : []);
+        const nextTotal =
+          isEnumerationResponse(data) ? data.total : 0;
+        const nextTotalPages =
+          isEnumerationResponse(data)
+            ? data.totalPages
+            : Math.max(1, Math.ceil(nextTotal / pageSize));
+        setTotal(nextTotal);
+
+        if (page > nextTotalPages) {
+          setPage(nextTotalPages);
+          return;
+        }
+
+        const nextItems = isEnumerationResponse(data) ? data.items : [];
+
+        setItems(nextItems);
       } catch (caughtError) {
         if (
           caughtError instanceof DOMException &&
@@ -350,6 +493,7 @@ export default function EnumerationPage() {
         console.error("Failed to fetch enumerations:", caughtError);
         setError("Unable to load enumeration records right now.");
         setItems([]);
+        setTotal(0);
       } finally {
         if (!controller.signal.aborted) {
           setLoading(false);
@@ -360,7 +504,33 @@ export default function EnumerationPage() {
     void fetchData();
 
     return () => controller.abort();
-  }, [serviceCenter, day, month, from, to]);
+  }, [serviceCenter, day, month, from, to, page, pageSize]);
+
+  const fetchExportItems = async () => {
+    const params = buildEnumerationParams({
+      serviceCenter,
+      day,
+      month,
+      from,
+      to,
+    });
+
+    const response = await fetch(`/api/enumerations/export?${params.toString()}`);
+    const data = (await response.json()) as
+      | EnumerationExportResponse
+      | { error?: string }
+      | null;
+
+    if (!response.ok) {
+      throw new Error(
+        data && typeof data === "object" && "error" in data && typeof data.error === "string"
+          ? data.error || "Failed to export enumeration data"
+          : "Failed to export enumeration data",
+      );
+    }
+
+    return isEnumerationExportResponse(data) ? data.items : [];
+  };
 
   const stats = useMemo(() => {
     const uniqueUsers = new Set(items.map((item) => item.userName)).size;
@@ -371,11 +541,16 @@ export default function EnumerationPage() {
     ).size;
 
     return {
-      total: items.length,
+      total,
       uniqueUsers,
       uniqueCenters,
     };
-  }, [items]);
+  }, [items, total]);
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const firstRecordIndex = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const lastRecordIndex = Math.min(currentPage * pageSize, total);
 
   const resetFilters = () => {
     setServiceCenter("ALL");
@@ -383,46 +558,65 @@ export default function EnumerationPage() {
     setMonth("");
     setFrom("");
     setTo("");
+    setPage(1);
   };
 
-  const handleExport = () => {
-    const csv = buildCustomerExportCsv(items);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      const exportItems = await fetchExportItems();
+      const csv = buildCustomerExportCsv(exportItems);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
 
-    const suffix = buildExportFilenameSuffix({
-      serviceCenter,
-      day,
-      month,
-      from,
-      to,
-    });
+      const suffix = buildExportFilenameSuffix({
+        serviceCenter,
+        day,
+        month,
+        from,
+        to,
+      });
 
-    link.href = url;
-    link.download = `enumeration-customer-export${suffix}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+      link.href = url;
+      link.download = `enumeration-customer-export${suffix}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (caughtError) {
+      console.error("Failed to export enumerations:", caughtError);
+      setError("Unable to export enumeration records right now.");
+    } finally {
+      setExporting(false);
+    }
   };
 
-  const handleDownloadChanges = () => {
-    const csv = buildChangesCsv(items);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
+  const handleDownloadChanges = async () => {
+    try {
+      setExporting(true);
+      const exportItems = await fetchExportItems();
+      const csv = buildChangesCsv(exportItems);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
 
-    const suffix = buildExportFilenameSuffix({
-      serviceCenter,
-      day,
-      month,
-      from,
-      to,
-    });
+      const suffix = buildExportFilenameSuffix({
+        serviceCenter,
+        day,
+        month,
+        from,
+        to,
+      });
 
-    link.href = url;
-    link.download = `enumeration-changes${suffix}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+      link.href = url;
+      link.download = `enumeration-changes${suffix}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (caughtError) {
+      console.error("Failed to export enumeration changes:", caughtError);
+      setError("Unable to export enumeration records right now.");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const activeFilterLabel = useMemo(() => {
@@ -457,7 +651,7 @@ export default function EnumerationPage() {
                 <Button
                   size="sm"
                   onClick={handleExport}
-                  disabled={items.length === 0}
+                  disabled={items.length === 0 || exporting}
                 >
                   <Download className="size-4" /> Export
                 </Button>
@@ -466,7 +660,7 @@ export default function EnumerationPage() {
                   variant="outline"
                   size="sm"
                   onClick={handleDownloadChanges}
-                  disabled={items.length === 0}
+                  disabled={items.length === 0 || exporting}
                 >
                   <Download className="size-4" /> Download changes
                 </Button>
@@ -482,7 +676,7 @@ export default function EnumerationPage() {
             icon: ClipboardList,
             label: "Records in scope",
             value: stats.total.toLocaleString(),
-            note: activeFilterLabel,
+            note: `${activeFilterLabel} · Page ${currentPage.toLocaleString()} of ${totalPages.toLocaleString()}`,
           },
           {
             icon: UserRoundCog,
@@ -526,7 +720,13 @@ export default function EnumerationPage() {
           <div className="grid gap-4 md:grid-cols-5">
             <div className="space-y-2 md:col-span-1">
               <Label htmlFor="service-center">Service center</Label>
-              <Select value={serviceCenter} onValueChange={setServiceCenter}>
+              <Select
+                value={serviceCenter}
+                onValueChange={(value) => {
+                  setServiceCenter(value);
+                  setPage(1);
+                }}
+              >
                 <SelectTrigger id="service-center" className="w-full">
                   <SelectValue placeholder="All service centers" />
                 </SelectTrigger>
@@ -547,6 +747,7 @@ export default function EnumerationPage() {
                 type="date"
                 value={day}
                 onChange={(event) => {
+                  setPage(1);
                   setDay(event.target.value);
                   setMonth("");
                   setFrom("");
@@ -562,6 +763,7 @@ export default function EnumerationPage() {
                 type="month"
                 value={month}
                 onChange={(event) => {
+                  setPage(1);
                   setMonth(event.target.value);
                   setDay("");
                   setFrom("");
@@ -577,6 +779,7 @@ export default function EnumerationPage() {
                 type="date"
                 value={from}
                 onChange={(event) => {
+                  setPage(1);
                   setFrom(event.target.value);
                   setDay("");
                   setMonth("");
@@ -591,6 +794,7 @@ export default function EnumerationPage() {
                 type="date"
                 value={to}
                 onChange={(event) => {
+                  setPage(1);
                   setTo(event.target.value);
                   setDay("");
                   setMonth("");
@@ -657,7 +861,7 @@ export default function EnumerationPage() {
                     ) : (
                       items.map((item) => (
                         <TableRow
-                          key={item.id}
+                          key={item.accountNumber}
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() =>
                             router.push(`/customers/${item.customerId}`)
@@ -712,92 +916,174 @@ export default function EnumerationPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {items.slice(0, 12).map((item) => {
-                const changedFields = getChangedFields(
-                  item.beforeData,
-                  item.afterData,
-                );
-
-                return (
-                  <div
-                    key={item.id}
-                    className="rounded-lg border bg-muted/20 p-4"
-                  >
-                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <p className="font-medium">
-                          Customer #{item.customerId}
-                        </p>
-
-                        <div className="flex flex-col gap-1 text-sm text-foreground sm:flex-row sm:items-center sm:gap-4">
-                          <p>
-                            Account:{" "}
-                            <span className="font-semibold">
-                              {item.accountNumber}
-                            </span>
-                          </p>
-
-                          <p>
-                            Meter:{" "}
-                            <span className="font-semibold">
-                              {item.meterNumber ?? "—"}
-                            </span>
-                          </p>
-                        </div>
-
-                        <p className="text-sm text-muted-foreground">
-                          {item.userName} ·{" "}
-                          {formatServiceCenter(item.serviceCenter)}
-                        </p>
-                      </div>
-
-                      <span className="text-xs text-muted-foreground">
-                        {formatDateTime(item.enumeratedAt)}
-                      </span>
-                    </div>
-
-                    {changedFields.length > 0 ? (
-                      <div className="space-y-2">
-                        {changedFields.map((field) => (
-                          <div
-                            key={field}
-                            className="rounded-md border bg-background p-2 text-sm"
-                          >
-                            <div className="mb-1 font-medium text-foreground">
-                              {field}
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
-                              <span>
-                                Before:{" "}
-                                {String(item.beforeData?.[field] ?? "—")}
-                              </span>
-                              <span>→</span>
-                              <span>
-                                After: {String(item.afterData?.[field] ?? "—")}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        No field-level differences were recorded for this
-                        update.
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-
-              {items.length === 0 ? (
+              {loading ? (
+                <p className="text-sm text-muted-foreground">
+                  Loading enumeration changes...
+                </p>
+              ) : items.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   No field changes are available for the selected scope.
                 </p>
-              ) : null}
+              ) : (
+                items.slice(0, 12).map((item) => {
+                  const changedFields = getChangedFields(
+                    item.beforeData,
+                    item.afterData,
+                  );
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="rounded-lg border bg-muted/20 p-4"
+                    >
+                      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="font-medium">
+                            Customer #{item.customerId}
+                          </p>
+
+                          <div className="flex flex-col gap-1 text-sm text-foreground sm:flex-row sm:items-center sm:gap-4">
+                            <p>
+                              Account:{" "}
+                              <span className="font-semibold">
+                                {item.accountNumber}
+                              </span>
+                            </p>
+
+                            <p>
+                              Meter:{" "}
+                              <span className="font-semibold">
+                                {item.meterNumber ?? "—"}
+                              </span>
+                            </p>
+                          </div>
+
+                          <p className="text-sm text-muted-foreground">
+                            {item.userName} ·{" "}
+                            {formatServiceCenter(item.serviceCenter)}
+                          </p>
+                        </div>
+
+                        <span className="text-xs text-muted-foreground">
+                          {formatDateTime(item.enumeratedAt)}
+                        </span>
+                      </div>
+
+                      {changedFields.length > 0 ? (
+                        <div className="space-y-2">
+                          {changedFields.map((field) => (
+                            <div
+                              key={field}
+                              className="rounded-md border bg-background p-2 text-sm"
+                            >
+                              <div className="mb-1 font-medium text-foreground">
+                                {field}
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
+                                <span>
+                                  Before:{" "}
+                                  {String(item.beforeData?.[field] ?? "—")}
+                                </span>
+                                <span>→</span>
+                                <span>
+                                  After:{" "}
+                                  {String(item.afterData?.[field] ?? "—")}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          No field-level differences were recorded for this
+                          update.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })
+              )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      <div className="my-4 flex w-full flex-col gap-4 rounded-lg border bg-background px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-muted-foreground">
+          Showing{" "}
+          <span className="font-medium text-foreground">
+            {firstRecordIndex.toLocaleString()}-
+            {lastRecordIndex.toLocaleString()}
+          </span>{" "}
+          of{" "}
+          <span className="font-medium text-foreground">
+            {total.toLocaleString()}
+          </span>{" "}
+          records
+        </p>
+
+        <div>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setPage((current) => Math.max(1, current - 1));
+                  }}
+                  aria-disabled={page <= 1 || loading}
+                  className={
+                    page <= 1 || loading ? "pointer-events-none opacity-50" : ""
+                  }
+                />
+              </PaginationItem>
+
+              {buildPaginationItems(currentPage, totalPages).map(
+                (item, index) =>
+                  item === "ellipsis" ? (
+                    <PaginationItem key={`ellipsis-${index}`}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={item}>
+                      <PaginationLink
+                        href="#"
+                        isActive={item === currentPage}
+                        aria-disabled={loading}
+                        className={
+                          loading ? "pointer-events-none opacity-50" : ""
+                        }
+                        onClick={(event) => {
+                          event.preventDefault();
+                          setPage(item);
+                        }}
+                      >
+                        {item}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ),
+              )}
+
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setPage((current) => Math.min(totalPages, current + 1));
+                  }}
+                  aria-disabled={page >= totalPages || loading}
+                  className={
+                    page >= totalPages || loading
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      </div>
     </>
   );
 }

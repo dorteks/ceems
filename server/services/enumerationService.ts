@@ -113,7 +113,7 @@ function buildWhereClause(options?: {
   to?: Date;
 }) {
   return {
-    ...(options?.customerId ? { customer_id: options.customerId } : {}),
+    ...(options?.customerId != null ? { customer_id: options.customerId } : {}),
     ...(options?.serviceCenter
       ? { service_center: options.serviceCenter }
       : {}),
@@ -213,6 +213,7 @@ export async function getEnumerationsByServiceCenter(serviceCenter: string) {
 }
 
 export async function getEnumerationStats(options?: {
+  customerId?: number;
   serviceCenter?: ServiceCenterValue | null;
   from?: Date;
   to?: Date;
@@ -230,11 +231,10 @@ export async function exportEnumerations(options?: {
   from?: Date;
   to?: Date;
 }) {
-  return listEnumerations({
-    customerId: options?.customerId,
-    serviceCenter: options?.serviceCenter,
-    from: options?.from,
-    to: options?.to,
-    limit: 10_000,
+  const rows = await prisma.customerEnumeration.findMany({
+    where: buildWhereClause(options),
+    orderBy: [{ enumerated_at: "desc" }, { id: "desc" }],
   });
+
+  return rows.map(serializeEnumeration);
 }
