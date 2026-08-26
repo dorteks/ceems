@@ -113,7 +113,7 @@ function buildWhereClause(options?: {
   to?: Date;
 }) {
   return {
-    ...(options?.customerId ? { customer_id: options.customerId } : {}),
+    ...(options?.customerId != null ? { customer_id: options.customerId } : {}),
     ...(options?.serviceCenter
       ? { service_center: options.serviceCenter }
       : {}),
@@ -213,6 +213,7 @@ export async function getEnumerationsByServiceCenter(serviceCenter: string) {
 }
 
 export async function getEnumerationStats(options?: {
+  customerId?: number;
   serviceCenter?: ServiceCenterValue | null;
   from?: Date;
   to?: Date;

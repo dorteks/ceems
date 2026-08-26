@@ -72,6 +72,40 @@ type EnumerationResponse = {
   totalPages: number;
 };
 
+type EnumerationErrorResponse = {
+  error?: string;
+};
+
+function isEnumerationResponse(
+  value: EnumerationResponse | EnumerationErrorResponse | null,
+): value is EnumerationResponse {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "items" in value &&
+    Array.isArray(value.items) &&
+    "total" in value &&
+    typeof value.total === "number" &&
+    "page" in value &&
+    typeof value.page === "number" &&
+    "pageSize" in value &&
+    typeof value.pageSize === "number" &&
+    "totalPages" in value &&
+    typeof value.totalPages === "number"
+  );
+}
+
+function isEnumerationErrorResponse(
+  value: EnumerationResponse | EnumerationErrorResponse | null,
+): value is EnumerationErrorResponse {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "error" in value &&
+    typeof value.error === "string"
+  );
+}
+
 const DEFAULT_PAGE_SIZE = 100;
 
 const serviceCenterOptions = [
@@ -379,17 +413,21 @@ export default function EnumerationPage() {
         });
         const data = (await response.json()) as
           | EnumerationResponse
-          | { error?: string }
+          | EnumerationErrorResponse
           | null;
 
         if (!response.ok) {
-          throw new Error(data?.error || "Failed to load enumeration data");
+          throw new Error(
+            isEnumerationErrorResponse(data)
+              ? data.error || "Failed to load enumeration data"
+              : "Failed to load enumeration data",
+          );
         }
 
         const nextTotal =
-          data && typeof data.total === "number" ? data.total : 0;
+          isEnumerationResponse(data) ? data.total : 0;
         const nextTotalPages =
-          data && typeof data.totalPages === "number"
+          isEnumerationResponse(data)
             ? data.totalPages
             : Math.max(1, Math.ceil(nextTotal / pageSize));
         setTotal(nextTotal);
@@ -399,9 +437,7 @@ export default function EnumerationPage() {
           return;
         }
 
-        const nextItems = Array.isArray(data?.items)
-          ? (data.items as EnumerationItem[])
-          : [];
+        const nextItems = isEnumerationResponse(data) ? data.items : [];
 
         setItems(nextItems);
       } catch (caughtError) {
