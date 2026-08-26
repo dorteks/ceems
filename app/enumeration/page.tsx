@@ -72,6 +72,21 @@ type EnumerationResponse = {
   totalPages: number;
 };
 
+type EnumerationExportResponse = {
+  items: EnumerationItem[];
+};
+
+function isEnumerationExportResponse(
+  value: EnumerationExportResponse | { error?: string } | null,
+): value is EnumerationExportResponse {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "items" in value &&
+    Array.isArray(value.items)
+  );
+}
+
 type EnumerationErrorResponse = {
   error?: string;
 };
@@ -181,6 +196,46 @@ function buildPaginationItems(page: number, totalPages: number) {
       acc.push(current);
       return acc;
     }, []);
+}
+
+function buildEnumerationParams(filters: {
+  page?: number;
+  pageSize?: number;
+  serviceCenter: string;
+  day: string;
+  month: string;
+  from: string;
+  to: string;
+}) {
+  const params = new URLSearchParams();
+
+  if (filters.page !== undefined) {
+    params.set("page", String(filters.page));
+  }
+
+  if (filters.pageSize !== undefined) {
+    params.set("size", String(filters.pageSize));
+  }
+
+  if (filters.serviceCenter !== "ALL") {
+    params.set("serviceCenter", filters.serviceCenter);
+  }
+
+  if (filters.day) {
+    params.set("day", filters.day);
+  } else if (filters.month) {
+    params.set("month", filters.month);
+  } else if (filters.from || filters.to) {
+    if (filters.from) {
+      params.set("from", new Date(`${filters.from}T00:00:00.000Z`).toISOString());
+    }
+
+    if (filters.to) {
+      params.set("to", new Date(`${filters.to}T23:59:59.999Z`).toISOString());
+    }
+  }
+
+  return params;
 }
 
 const CUSTOMER_EXPORT_HEADERS = [
@@ -376,6 +431,7 @@ export default function EnumerationPage() {
   const [month, setMonth] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -383,29 +439,15 @@ export default function EnumerationPage() {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-
-      const params = new URLSearchParams({
-        page: String(page),
-        size: String(pageSize),
+      const params = buildEnumerationParams({
+        page,
+        pageSize,
+        serviceCenter,
+        day,
+        month,
+        from,
+        to,
       });
-
-      if (serviceCenter !== "ALL") {
-        params.set("serviceCenter", serviceCenter);
-      }
-
-      if (day) {
-        params.set("day", day);
-      } else if (month) {
-        params.set("month", month);
-      } else if (from || to) {
-        if (from) {
-          params.set("from", new Date(`${from}T00:00:00.000Z`).toISOString());
-        }
-
-        if (to) {
-          params.set("to", new Date(`${to}T23:59:59.999Z`).toISOString());
-        }
-      }
 
       try {
         const response = await fetch(`/api/enumerations?${params.toString()}`, {
@@ -464,6 +506,32 @@ export default function EnumerationPage() {
     return () => controller.abort();
   }, [serviceCenter, day, month, from, to, page, pageSize]);
 
+  const fetchExportItems = async () => {
+    const params = buildEnumerationParams({
+      serviceCenter,
+      day,
+      month,
+      from,
+      to,
+    });
+
+    const response = await fetch(`/api/enumerations/export?${params.toString()}`);
+    const data = (await response.json()) as
+      | EnumerationExportResponse
+      | { error?: string }
+      | null;
+
+    if (!response.ok) {
+      throw new Error(
+        data && typeof data === "object" && "error" in data && typeof data.error === "string"
+          ? data.error || "Failed to export enumeration data"
+          : "Failed to export enumeration data",
+      );
+    }
+
+    return isEnumerationExportResponse(data) ? data.items : [];
+  };
+
   const stats = useMemo(() => {
     const uniqueUsers = new Set(items.map((item) => item.userName)).size;
     const uniqueCenters = new Set(
@@ -493,44 +561,62 @@ export default function EnumerationPage() {
     setPage(1);
   };
 
-  const handleExport = () => {
-    const csv = buildCustomerExportCsv(items);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      const exportItems = await fetchExportItems();
+      const csv = buildCustomerExportCsv(exportItems);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
 
-    const suffix = buildExportFilenameSuffix({
-      serviceCenter,
-      day,
-      month,
-      from,
-      to,
-    });
+      const suffix = buildExportFilenameSuffix({
+        serviceCenter,
+        day,
+        month,
+        from,
+        to,
+      });
 
-    link.href = url;
-    link.download = `enumeration-customer-export${suffix}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+      link.href = url;
+      link.download = `enumeration-customer-export${suffix}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (caughtError) {
+      console.error("Failed to export enumerations:", caughtError);
+      setError("Unable to export enumeration records right now.");
+    } finally {
+      setExporting(false);
+    }
   };
 
-  const handleDownloadChanges = () => {
-    const csv = buildChangesCsv(items);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
+  const handleDownloadChanges = async () => {
+    try {
+      setExporting(true);
+      const exportItems = await fetchExportItems();
+      const csv = buildChangesCsv(exportItems);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
 
-    const suffix = buildExportFilenameSuffix({
-      serviceCenter,
-      day,
-      month,
-      from,
-      to,
-    });
+      const suffix = buildExportFilenameSuffix({
+        serviceCenter,
+        day,
+        month,
+        from,
+        to,
+      });
 
-    link.href = url;
-    link.download = `enumeration-changes${suffix}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+      link.href = url;
+      link.download = `enumeration-changes${suffix}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (caughtError) {
+      console.error("Failed to export enumeration changes:", caughtError);
+      setError("Unable to export enumeration records right now.");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const activeFilterLabel = useMemo(() => {
@@ -565,7 +651,7 @@ export default function EnumerationPage() {
                 <Button
                   size="sm"
                   onClick={handleExport}
-                  disabled={items.length === 0}
+                  disabled={items.length === 0 || exporting}
                 >
                   <Download className="size-4" /> Export
                 </Button>
@@ -574,7 +660,7 @@ export default function EnumerationPage() {
                   variant="outline"
                   size="sm"
                   onClick={handleDownloadChanges}
-                  disabled={items.length === 0}
+                  disabled={items.length === 0 || exporting}
                 >
                   <Download className="size-4" /> Download changes
                 </Button>

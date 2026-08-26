@@ -231,11 +231,10 @@ export async function exportEnumerations(options?: {
   from?: Date;
   to?: Date;
 }) {
-  return listEnumerations({
-    customerId: options?.customerId,
-    serviceCenter: options?.serviceCenter,
-    from: options?.from,
-    to: options?.to,
-    limit: 10_000,
+  const rows = await prisma.customerEnumeration.findMany({
+    where: buildWhereClause(options),
+    orderBy: [{ enumerated_at: "desc" }, { id: "desc" }],
   });
+
+  return rows.map(serializeEnumeration);
 }
