@@ -36,8 +36,18 @@ export type CustomerType = (typeof CustomerType)[keyof typeof CustomerType]
 
 
 export const MeterType = {
+  LONGI: 'LONGI',
+  MOJEC: 'MOJEC',
+  MOMAS: 'MOMAS',
+  PROTOGY: 'PROTOGY',
+  HEXIN: 'HEXIN',
+  IRL: 'IRL',
+  NSTS: 'NSTS',
   PREPAID: 'PREPAID',
-  POSTPAID: 'POSTPAID'
+  POSTPAID: 'POSTPAID',
+  TC_AND_P: 'TC_AND_P',
+  HOLLEY: 'HOLLEY',
+  NEW_HAMPSHIRE: 'NEW_HAMPSHIRE'
 } as const
 
 export type MeterType = (typeof MeterType)[keyof typeof MeterType]
