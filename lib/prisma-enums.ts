@@ -22,8 +22,17 @@ export const PremiseType = {
 export type PremiseTypeValue = (typeof PremiseType)[keyof typeof PremiseType];
 
 export const MeterType = {
-  PREPAID: "PREPAID",
+  LONGI: "LONGI",
+  MOJEC: "MOJEC",
+  MOMAS: "MOMAS",
+  PROTOGY: "PROTOGY",
+  HEXIN: "HEXIN",
+  IRL: "IRL",
+  NSTS: "NSTS",
   POSTPAID: "POSTPAID",
+  TC_AND_P: "TC_AND_P",
+  HOLLEY: "HOLLEY",
+  NEW_HAMPSHIRE: "NEW_HAMPSHIRE",
 } as const;
 export type MeterTypeValue = (typeof MeterType)[keyof typeof MeterType];
 

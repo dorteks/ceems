@@ -10,11 +10,27 @@ import {
 import type { SelectOption } from "./customer-form";
 
 function formatEnumLabel(value: string) {
-  return value
-    .toLowerCase()
-    .split("_")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+  const normalized = value.replace(/_AND_/g, " & ").replace(/_+/g, " ");
+
+  if (normalized === "TC & P") {
+    return "TC&P";
+  }
+
+  return normalized
+    .split(" ")
+    .map((part) => {
+      const trimmed = part.trim();
+      if (!trimmed) return "";
+
+      if (trimmed === trimmed.toUpperCase() && trimmed.length <= 4) {
+        return trimmed;
+      }
+
+      return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+    })
+    .join(" ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 function optionsFromEnum(values: Record<string, string>): SelectOption[] {

@@ -28,8 +28,17 @@ enum CustomerType {
 }
 
 enum MeterType {
-  PREPAID
+  LONGI
+  MOJEC
+  MOMAS
+  PROTOGY
+  HEXIN
+  IRL
+  NSTS
   POSTPAID
+  TC_AND_P
+  HOLLEY
+  NEW_HAMPSHIRE
 }
 
 enum PremiseType {
