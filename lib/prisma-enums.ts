@@ -29,6 +29,7 @@ export const MeterType = {
   HEXIN: "HEXIN",
   IRL: "IRL",
   NSTS: "NSTS",
+  PREPAID: "PREPAID",
   POSTPAID: "POSTPAID",
   TC_AND_P: "TC_AND_P",
   HOLLEY: "HOLLEY",
