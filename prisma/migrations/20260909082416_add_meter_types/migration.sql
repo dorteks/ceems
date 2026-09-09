@@ -6,7 +6,20 @@
 */
 -- AlterEnum
 BEGIN;
-CREATE TYPE "MeterType_new" AS ENUM ('LONGI', 'MOJEC', 'MOMAS', 'PROTOGY', 'HEXIN', 'IRL', 'NSTS', 'POSTPAID', 'TC_AND_P', 'HOLLEY', 'NEW_HAMPSHIRE');
+CREATE TYPE "MeterType_new" AS ENUM (
+  'LONGI',
+  'MOJEC',
+  'MOMAS',
+  'PROTOGY',
+  'HEXIN',
+  'IRL',
+  'NSTS',
+  'PREPAID',
+  'POSTPAID',
+  'TC_AND_P',
+  'HOLLEY',
+  'NEW_HAMPSHIRE'
+);
 ALTER TABLE "Customer" ALTER COLUMN "meter_type" TYPE "MeterType_new" USING ("meter_type"::text::"MeterType_new");
 ALTER TYPE "MeterType" RENAME TO "MeterType_old";
 ALTER TYPE "MeterType_new" RENAME TO "MeterType";
