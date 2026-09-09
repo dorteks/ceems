@@ -207,6 +207,7 @@ export default function Dashboard() {
         }
       />
 
+      {/* migration fixes push */}
       {error ? (
         <Card className="mb-4 border-destructive/30 bg-destructive/5">
           <CardContent className="py-4 text-sm text-muted-foreground">
