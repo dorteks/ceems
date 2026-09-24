@@ -4,6 +4,7 @@ import {
   listCustomers,
   createCustomer,
   deleteAllCustomers,
+  InvalidServiceCenterError,
 } from "../../../server/services/customerService";
 import { getSessionUser } from "../../../server/services/userService";
 import { recordAuditEvent } from "../../../server/services/auditService";
@@ -27,6 +28,7 @@ export async function GET(req: Request) {
     const lga = url.searchParams.get("lga") || undefined;
     const feederBand = url.searchParams.get("feeder_band") || undefined;
     const state = url.searchParams.get("state") || undefined;
+    const serviceCenter = url.searchParams.get("service_center") || undefined;
 
     const result = await listCustomers({
       page,
@@ -36,11 +38,19 @@ export async function GET(req: Request) {
       lga,
       feederBand,
       state,
+      serviceCenter,
     });
 
     return NextResponse.json(result, { status: 200 });
   } catch (error: unknown) {
-    console.error(error);
+    if (error instanceof InvalidServiceCenterError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    console.error("Customer list failed", JSON.stringify({
+      code: error instanceof Error && "code" in error ? error.code : undefined,
+      meta: error instanceof Error && "meta" in error ? error.meta : undefined,
+    }));
 
     return NextResponse.json(
       { error: "Failed to fetch customers" },
