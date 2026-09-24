@@ -1,5 +1,6 @@
 import { Prisma } from "@/generated/prisma/client";
 import {
+  ServiceCenter,
   type CustomerCategoryValue,
   type CustomerTypeValue,
   type MeterPhaseValue,
@@ -119,6 +120,25 @@ function normalizeFilter(value?: string | null) {
   return trimmed && trimmed.length > 0 ? trimmed : undefined;
 }
 
+export class InvalidServiceCenterError extends Error {
+  constructor() {
+    super("Invalid service center");
+    this.name = "InvalidServiceCenterError";
+  }
+}
+
+function mapServiceCenterFilter(value?: string | null) {
+  const normalized = normalizeFilter(value)?.toUpperCase();
+  if (!normalized) return undefined;
+
+  const serviceCenter = Object.values(ServiceCenter).find(
+    (center) => center === normalized,
+  );
+  if (!serviceCenter) throw new InvalidServiceCenterError();
+
+  return serviceCenter;
+}
+
 function mapStatusFilter(value?: string | null) {
   const normalized = normalizeFilter(value);
 
@@ -151,6 +171,7 @@ function buildCustomerWhere(options?: {
   lga?: string | null;
   feederBand?: string | null;
   state?: string | null;
+  serviceCenter?: string | null;
 }) {
   const where: Prisma.CustomerWhereInput = {};
   const search = normalizeFilter(options?.search);
@@ -195,6 +216,11 @@ function buildCustomerWhere(options?: {
   const state = normalizeFilter(options?.state);
   if (state) {
     where.state = { equals: state, mode: "insensitive" };
+  }
+
+  const serviceCenter = mapServiceCenterFilter(options?.serviceCenter);
+  if (serviceCenter) {
+    where.service_center = serviceCenter;
   }
 
   return where;
@@ -249,6 +275,7 @@ export async function listCustomers(opts?: {
   lga?: string | null;
   feederBand?: string | null;
   state?: string | null;
+  serviceCenter?: string | null;
 }) {
   const page = opts?.page && opts.page > 0 ? opts.page : 1;
   const size = opts?.size && opts.size > 0 ? opts.size : 50;
@@ -259,6 +286,7 @@ export async function listCustomers(opts?: {
     lga: opts?.lga,
     feederBand: opts?.feederBand,
     state: opts?.state,
+    serviceCenter: opts?.serviceCenter,
   });
 
   const [items, total] = await Promise.all([
@@ -298,4 +326,17 @@ export async function importCustomers(
   }
 
   return { total: customers.length, imported };
+}
+
+export async function exportCustomers(options?: {
+  serviceCenter?: string | null;
+}) {
+  const where = buildCustomerWhere({ serviceCenter: options?.serviceCenter });
+
+  const items = await prisma.customer.findMany({
+    where,
+    orderBy: { created_at: "desc" },
+  });
+
+  return items;
 }

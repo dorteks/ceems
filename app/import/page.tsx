@@ -153,7 +153,7 @@ export default function ImportPage() {
     try {
       setJobsError(null);
       setJobsLoading(true);
-      const response = await fetch("/api/import-jobs?limit=10", {
+      const response = await fetch("/api/import-jobs?limit=100", {
         credentials: "include",
       });
 

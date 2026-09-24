@@ -55,6 +55,7 @@ import {
   type StatusValue,
 } from "@/lib/prisma-enums";
 import { useAuth } from "@/lib/auth/auth";
+import { serviceCenterOptions as scOptionsRaw } from "./_lib/customer-enums";
 
 type CustomerTableRow = {
   id: string | number;
@@ -147,13 +148,16 @@ function matchesFilter(value: string | null | undefined, filter: string) {
 export default function CustomersPage() {
   const router = useRouter();
   const { adminAccess } = useAuth();
-  const pageSize = 50;
+  const pageSize = 100;
 
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("All statuses");
   const [lga, setLga] = useState("All LGAs");
   const [feederBand, setFeederBand] = useState("All bands");
   const [stateFilter, setStateFilter] = useState("All states");
+  const [serviceCenterFilter, setServiceCenterFilter] = useState(
+    "All service centers",
+  );
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string[]>([]);
   const [apiCustomers, setApiCustomers] = useState<CustomerTableRow[]>([]);
@@ -199,6 +203,9 @@ export default function CustomersPage() {
         if (!stateFilter.startsWith("All ")) {
           params.set("state", stateFilter);
         }
+        if (!serviceCenterFilter.startsWith("All ")) {
+          params.set("service_center", serviceCenterFilter);
+        }
 
         const response = await fetch(`/api/customers?${params.toString()}`, {
           signal: controller.signal,
@@ -240,7 +247,7 @@ export default function CustomersPage() {
     return () => {
       controller.abort();
     };
-  }, [query, status, lga, feederBand, stateFilter, page]);
+  }, [query, status, lga, feederBand, stateFilter, serviceCenterFilter, page]);
 
   const demoRows = useMemo(() => {
     const q = normalizeText(query);
@@ -271,7 +278,8 @@ export default function CustomersPage() {
         matchesFilter(c.status, status) &&
         matchesFilter(c.lga, lga) &&
         matchesFilter(formatFeederBand(c.feeder_band), feederBand) &&
-        matchesFilter(c.state, stateFilter)
+        matchesFilter(c.state, stateFilter) &&
+        matchesFilter(c.service_center, serviceCenterFilter)
       );
     });
 
@@ -280,7 +288,7 @@ export default function CustomersPage() {
       items: filtered.slice(start, start + pageSize),
       total: filtered.length,
     };
-  }, [query, status, lga, feederBand, stateFilter, page, pageSize]);
+  }, [query, status, lga, feederBand, stateFilter, serviceCenterFilter, page, pageSize]);
 
   const rows = loadError ? demoRows.items : apiCustomers;
   const displayTotalCount = loadError ? demoRows.total : totalCount;
@@ -315,6 +323,7 @@ export default function CustomersPage() {
     setLga("All LGAs");
     setFeederBand("All bands");
     setStateFilter("All states");
+    setServiceCenterFilter("All service centers");
     setPage(1);
   };
 
@@ -415,11 +424,151 @@ export default function CustomersPage() {
 
             {adminAccess && (
               <Button
-                onClick={() =>
-                  toast.message("Coming soon", {
-                    position: "top-right",
-                  })
-                }
+                onClick={async () => {
+                  try {
+                    const params = new URLSearchParams();
+                    if (!serviceCenterFilter.startsWith("All ")) {
+                      params.set("serviceCenter", serviceCenterFilter);
+                    }
+
+                    const response = await fetch(
+                      `/api/customers/export?${params.toString()}`,
+                    );
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                      throw new Error(
+                        data?.error || "Failed to export customers",
+                      );
+                    }
+
+                    const items = Array.isArray(data.items) ? data.items : [];
+
+                    // Build CSV using same headers as enumeration exporter
+                    const headers = [
+                      "Account_number",
+                      "Meter_number",
+                      "Customer_type",
+                      "Meter_type",
+                      "Meter Phase",
+                      "Customer Category (MD1,MD2,NMD)",
+                      "NIN",
+                      "Surname",
+                      "Firstname",
+                      "Othername",
+                      "Address",
+                      "City",
+                      "State",
+                      "LGA",
+                      "Service_Center",
+                      "Service_Code",
+                      "email",
+                      "Tariff",
+                      "Phone_Number",
+                      "Premise_Type",
+                      "Nature Of Business",
+                      "Date_Created",
+                      "Longitude",
+                      "Latitude",
+                      "DSS_ID",
+                      "DSS_Name",
+                      "Feeder_ID",
+                      "Feeder_Name",
+                      "Feeder_Band",
+                      "Status",
+                      "Business_hub",
+                      "Region",
+                      "Enumerator's Name",
+                      "Enumerator's ID",
+                      "Enumerator's Phone NO.",
+                      "Remark",
+                    ];
+
+                    function csvCell(value: unknown) {
+                      if (value === null || value === undefined) return '""';
+                      const normalized =
+                        typeof value === "string"
+                          ? value
+                          : typeof value === "number" ||
+                              typeof value === "boolean"
+                            ? String(value)
+                            : JSON.stringify(value);
+                      return `"${normalized.replaceAll('"', '""')}"`;
+                    }
+
+                    const fieldMap: Record<string, string> = {
+                      Account_number: "account_number",
+                      Meter_number: "meter_number",
+                      Customer_type: "customer_type",
+                      Meter_type: "meter_type",
+                      "Meter Phase": "meter_phase",
+                      "Customer Category (MD1,MD2,NMD)": "customer_category",
+                      NIN: "nin",
+                      Surname: "surname",
+                      Firstname: "first_name",
+                      Othername: "other_name",
+                      Address: "address",
+                      City: "city",
+                      State: "state",
+                      LGA: "lga",
+                      Service_Center: "service_center",
+                      Service_Code: "service_code",
+                      email: "email",
+                      Tariff: "tariff",
+                      Phone_Number: "phone",
+                      Premise_Type: "premise_type",
+                      "Nature Of Business": "nature_of_business",
+                      Date_Created: "created_at",
+                      Longitude: "longitude",
+                      Latitude: "latitude",
+                      DSS_ID: "dss_id",
+                      DSS_Name: "dss_name",
+                      Feeder_ID: "feeder_id",
+                      Feeder_Name: "feeder_name",
+                      Feeder_Band: "feeder_band",
+                      Status: "status",
+                      Business_hub: "business_hub",
+                      Region: "region",
+                      "Enumerator's Name": "enumerator_name",
+                      "Enumerator's ID": "enumerator_id",
+                      "Enumerator's Phone NO.": "enumerator_phone_number",
+                      Remark: "remark",
+                    };
+
+                    const rows = items.map((it: Record<string, unknown>) =>
+                      headers
+                        .map((h) =>
+                          csvCell(
+                            it[fieldMap[h as keyof typeof fieldMap]] ?? "",
+                          ),
+                        )
+                        .join(","),
+                    );
+
+                    const csv = [headers.map(csvCell).join(","), ...rows].join(
+                      "\n",
+                    );
+
+                    const blob = new Blob([csv], { type: "text/csv" });
+                    const urlObj = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = urlObj;
+                    const suffix = serviceCenterFilter.startsWith("All ")
+                      ? ""
+                      : `-${serviceCenterFilter.replace(/\s+/g, "-").toLowerCase()}`;
+                    link.download = `customers-export${suffix}.csv`;
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    URL.revokeObjectURL(urlObj);
+                  } catch (err) {
+                    toast.error(
+                      err instanceof Error
+                        ? err.message
+                        : "Failed to export customers",
+                    );
+                  }
+                }}
                 variant="outline"
                 size="sm"
               >
@@ -486,6 +635,32 @@ export default function CustomersPage() {
             }}
             options={feederBands}
           />
+          <div>
+            <Label className="mb-1.5 text-xs text-muted-foreground">
+              Service center
+            </Label>
+            <Select
+              value={serviceCenterFilter}
+              onValueChange={(next) => {
+                setServiceCenterFilter(next ?? "All service centers");
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All service centers">
+                  All service centers
+                </SelectItem>
+                {scOptionsRaw.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           {/* <FilterState
             label="State"
             value={stateFilter}
