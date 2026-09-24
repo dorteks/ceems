@@ -158,6 +158,7 @@ export default function CustomersPage() {
   const [serviceCenterFilter, setServiceCenterFilter] = useState(
     "All service centers",
   );
+  // check for updates
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string[]>([]);
   const [apiCustomers, setApiCustomers] = useState<CustomerTableRow[]>([]);
@@ -288,7 +289,16 @@ export default function CustomersPage() {
       items: filtered.slice(start, start + pageSize),
       total: filtered.length,
     };
-  }, [query, status, lga, feederBand, stateFilter, serviceCenterFilter, page, pageSize]);
+  }, [
+    query,
+    status,
+    lga,
+    feederBand,
+    stateFilter,
+    serviceCenterFilter,
+    page,
+    pageSize,
+  ]);
 
   const rows = loadError ? demoRows.items : apiCustomers;
   const displayTotalCount = loadError ? demoRows.total : totalCount;
