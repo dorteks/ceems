@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isEnumerator = user?.role === "Enumerator";
     const isViewer = user?.role === "Viewer";
 
-    const adminAccess = isSuperAdmin || isDataManager;
+    const adminAccess = isSuperAdmin || isDataManager || isSupervisor;
 
     return {
       ready,
