@@ -160,7 +160,9 @@ export default function AdminPage() {
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           <Badge
-                            variant={u.mustChangePassword ? "destructive" : "secondary"}
+                            variant={
+                              u.mustChangePassword ? "destructive" : "secondary"
+                            }
                             className="rounded-sm"
                           >
                             {u.mustChangePassword ? "Temporary" : "Set"}
